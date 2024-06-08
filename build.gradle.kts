@@ -41,6 +41,9 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+	
+	// https://mvnrepository.com/artifact/io.netty/netty-resolver-dns-native-macos
+	runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.110.Final:osx-aarch_64")
 }
 
 dependencyManagement {
