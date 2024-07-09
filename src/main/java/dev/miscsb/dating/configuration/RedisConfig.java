@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -17,22 +16,15 @@ import dev.miscsb.dating.model.Profile;
 
 @Configuration
 @Primary
-@EnableRedisRepositories("dev.miscsb.dating.repository")
 public class RedisConfig {
 
     private final String url;
     private final int port;
-    private final String username;
-    private final String password;
 
     public RedisConfig(@Value("${spring.data.redis.host}") String url,
-                       @Value("${spring.data.redis.port}") int port,
-                       @Value("${spring.data.redis.username}") String username,
-                       @Value("${spring.data.redis.password}") String password) {
+                       @Value("${spring.data.redis.port}") int port) {
         this.url = url;
         this.port = port;
-        this.username = username;
-        this.password = password;
     }
 
     /**
@@ -43,8 +35,6 @@ public class RedisConfig {
     @Bean
     public RedisStandaloneConfiguration redisStandaloneConfiguration() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(url, port);
-        redisStandaloneConfiguration.setUsername(username);
-        redisStandaloneConfiguration.setPassword(password);
         return redisStandaloneConfiguration;
     }
 
@@ -64,7 +54,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public ReactiveRedisTemplate<String, Profile> redisOperations(ReactiveRedisConnectionFactory connectionFactory) {
+    public ReactiveRedisTemplate<String, Profile> profiles(ReactiveRedisConnectionFactory connectionFactory) {
         Jackson2JsonRedisSerializer<Profile> serializer = new Jackson2JsonRedisSerializer<>(Profile.class);
 
         RedisSerializationContext.RedisSerializationContextBuilder<String, Profile> builder =
