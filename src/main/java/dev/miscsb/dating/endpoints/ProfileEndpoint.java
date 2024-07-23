@@ -14,6 +14,7 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import dev.hilla.Endpoint;
 import dev.miscsb.dating.KeyUtils;
+import static dev.miscsb.dating.FunctionalUtils.*;
 import dev.miscsb.dating.model.Profile;
 import reactor.core.publisher.Mono;
 
@@ -43,7 +44,7 @@ public class ProfileEndpoint {
                 description);
         var m1 = profileOps.opsForValue().set(KeyUtils.uid(id), profile);
         var m2 = reactiveStringRedisTemplate.opsForSet().add(KeyUtils.genderChannelOut(gender, preferredGenders), id);
-        return m1.flatMap(x -> m2.map(y -> id));
+        return Mono.zip(m1, m2).map(constant(id));
     }
 
     public Mono<Boolean> updateUser(String id, String firstName, String lastName, String pronouns, String gender,
@@ -56,7 +57,7 @@ public class ProfileEndpoint {
             var m1 = profileOps.opsForValue().set(KeyUtils.uid(id), profile);
             var m2 = reactiveStringRedisTemplate.opsForSet().remove(KeyUtils.genderChannelOut(oldProfile.gender(), oldProfile.preferredGenders()), id);
             var m3 = reactiveStringRedisTemplate.opsForSet().add(KeyUtils.genderChannelOut(gender, preferredGenders), id);
-            return m1.flatMap(x -> m2.flatMap(y -> m3.map(z -> true)));
+            return Mono.zip(m1, m2, m3).map(constant(true));
         });
     }
 
