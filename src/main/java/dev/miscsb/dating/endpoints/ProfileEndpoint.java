@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import dev.hilla.Endpoint;
+import dev.miscsb.dating.KeyUtils;
 import dev.miscsb.dating.model.Profile;
 import reactor.core.publisher.Mono;
 
@@ -26,24 +27,24 @@ public class ProfileEndpoint {
 
     public ProfileEndpoint(ReactiveRedisOperations<String, Profile> profileOps, StringRedisTemplate stringTemplate) {
         this.profileOps = profileOps;
-        this.userIdCounter = new RedisAtomicLong("global:uid", stringTemplate.getConnectionFactory());
-        this.userIdList = new DefaultRedisList<String>("global:users", stringTemplate);
+        this.userIdCounter = new RedisAtomicLong(KeyUtils.global("uid"), stringTemplate.getConnectionFactory());
+        this.userIdList = new DefaultRedisList<String>(KeyUtils.global("users"), stringTemplate);
     }
     
     public Mono<String> createUser(String firstName, String lastName, String pronouns, String gender, List<String> preferredGenders, int birthYear, String description) {
         String id = String.valueOf(userIdCounter.incrementAndGet());
         userIdList.add(id);
         Profile profile = new Profile(id, firstName, lastName, pronouns, gender, preferredGenders, birthYear, description);
-        return profileOps.opsForValue().set("uid:" + id, profile).flatMap(x -> Mono.just(id));
+        return profileOps.opsForValue().set(KeyUtils.uid(id), profile).flatMap(x -> Mono.just(id));
     }
 
     public Mono<Boolean> updateUser(String id, String firstName, String lastName, String pronouns, String gender, List<String> preferredGenders, int birthYear, String description) {
         if (!userIdList.contains(id)) return Mono.just(false);
         Profile profile = new Profile(id, firstName, lastName, pronouns, gender, preferredGenders, birthYear, description);
-        return profileOps.opsForValue().set("uid:" + id, profile).flatMap(x -> Mono.just(true));
+        return profileOps.opsForValue().set(KeyUtils.uid(id), profile).flatMap(x -> Mono.just(true));
     }
 
     public Mono<Profile> getUser(String id) {
-        return profileOps.opsForValue().get("uid:" + id);
+        return profileOps.opsForValue().get(KeyUtils.uid(id));
     }
 }
