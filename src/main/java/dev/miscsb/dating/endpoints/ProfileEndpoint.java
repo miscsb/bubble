@@ -3,6 +3,7 @@ package dev.miscsb.dating.endpoints;
 import java.util.List;
 
 import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicLong;
 import org.springframework.data.redis.support.collections.DefaultRedisList;
@@ -20,28 +21,43 @@ import reactor.core.publisher.Mono;
 @AnonymousAllowed
 @Component
 public class ProfileEndpoint {
-    
+
     private final ReactiveRedisOperations<String, Profile> profileOps;
     private final RedisAtomicLong userIdCounter;
     private final RedisList<String> userIdList;
+    private final ReactiveStringRedisTemplate reactiveStringRedisTemplate;
 
-    public ProfileEndpoint(ReactiveRedisOperations<String, Profile> profileOps, StringRedisTemplate stringTemplate) {
+    public ProfileEndpoint(ReactiveRedisOperations<String, Profile> profileOps, StringRedisTemplate stringTemplate,
+            ReactiveStringRedisTemplate reactiveStringRedisTemplate) {
         this.profileOps = profileOps;
         this.userIdCounter = new RedisAtomicLong(KeyUtils.global("uid"), stringTemplate.getConnectionFactory());
         this.userIdList = new DefaultRedisList<String>(KeyUtils.global("users"), stringTemplate);
-    }
-    
-    public Mono<String> createUser(String firstName, String lastName, String pronouns, String gender, List<String> preferredGenders, int birthYear, String description) {
-        String id = String.valueOf(userIdCounter.incrementAndGet());
-        userIdList.add(id);
-        Profile profile = new Profile(id, firstName, lastName, pronouns, gender, preferredGenders, birthYear, description);
-        return profileOps.opsForValue().set(KeyUtils.uid(id), profile).flatMap(x -> Mono.just(id));
+        this.reactiveStringRedisTemplate = reactiveStringRedisTemplate;
     }
 
-    public Mono<Boolean> updateUser(String id, String firstName, String lastName, String pronouns, String gender, List<String> preferredGenders, int birthYear, String description) {
-        if (!userIdList.contains(id)) return Mono.just(false);
-        Profile profile = new Profile(id, firstName, lastName, pronouns, gender, preferredGenders, birthYear, description);
-        return profileOps.opsForValue().set(KeyUtils.uid(id), profile).flatMap(x -> Mono.just(true));
+    public Mono<String> createUser(String firstName, String lastName, String pronouns, String gender,
+            List<String> preferredGenders, int birthYear, String description) {
+        String id = String.valueOf(userIdCounter.incrementAndGet());
+        userIdList.add(id);
+        Profile profile = new Profile(id, firstName, lastName, pronouns, gender, preferredGenders, birthYear,
+                description);
+        var m1 = profileOps.opsForValue().set(KeyUtils.uid(id), profile);
+        var m2 = reactiveStringRedisTemplate.opsForSet().add(KeyUtils.genderChannelOut(gender, preferredGenders), id);
+        return m1.flatMap(x -> m2.map(y -> id));
+    }
+
+    public Mono<Boolean> updateUser(String id, String firstName, String lastName, String pronouns, String gender,
+            List<String> preferredGenders, int birthYear, String description) {
+        if (!userIdList.contains(id))
+            return Mono.just(false);
+        return profileOps.opsForValue().get(KeyUtils.uid(id)).flatMap(oldProfile -> {
+            Profile profile = new Profile(id, firstName, lastName, pronouns, gender, preferredGenders, birthYear,
+                    description);
+            var m1 = profileOps.opsForValue().set(KeyUtils.uid(id), profile);
+            var m2 = reactiveStringRedisTemplate.opsForSet().remove(KeyUtils.genderChannelOut(oldProfile.gender(), oldProfile.preferredGenders()), id);
+            var m3 = reactiveStringRedisTemplate.opsForSet().add(KeyUtils.genderChannelOut(gender, preferredGenders), id);
+            return m1.flatMap(x -> m2.flatMap(y -> m3.map(z -> true)));
+        });
     }
 
     public Mono<Profile> getUser(String id) {
