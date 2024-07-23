@@ -18,13 +18,13 @@ import reactor.core.publisher.Mono;
 @Endpoint
 @AnonymousAllowed
 @Component
-public class ProfileCreationEndpoint {
+public class ProfileEndpoint {
     
     private final ReactiveRedisOperations<String, Profile> profileOps;
     private final RedisAtomicLong userIdCounter;
     private final RedisList<String> userIdList;
 
-    public ProfileCreationEndpoint(ReactiveRedisOperations<String, Profile> profileOps, StringRedisTemplate stringTemplate) {
+    public ProfileEndpoint(ReactiveRedisOperations<String, Profile> profileOps, StringRedisTemplate stringTemplate) {
         this.profileOps = profileOps;
         this.userIdCounter = new RedisAtomicLong("global:uid", stringTemplate.getConnectionFactory());
         this.userIdList = new DefaultRedisList<String>("global:users", stringTemplate);

@@ -9,13 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import dev.miscsb.dating.configuration.RedisConfig;
-import dev.miscsb.dating.endpoints.ProfileCreationEndpoint;
+import dev.miscsb.dating.endpoints.ProfileEndpoint;
 import dev.miscsb.dating.model.Profile;
 
 @SpringBootTest(classes={ DatingApplication.class, RedisConfig.class })
 class DatingApplicationTests {
 
-	@Autowired ProfileCreationEndpoint endpoint;
+	@Autowired ProfileEndpoint endpoint;
 
     @Test
     public void testProfileCreation() {
