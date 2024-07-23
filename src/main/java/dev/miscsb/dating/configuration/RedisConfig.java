@@ -12,6 +12,7 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import dev.miscsb.dating.model.Bubble;
 import dev.miscsb.dating.model.Profile;
 
 @Configuration
@@ -61,6 +62,18 @@ public class RedisConfig {
             RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
 
         RedisSerializationContext<String, Profile> context = builder.value(serializer).build();
+
+        return new ReactiveRedisTemplate<>(connectionFactory, context);
+    }
+
+    @Bean
+    public ReactiveRedisTemplate<String, Bubble> bubbles(ReactiveRedisConnectionFactory connectionFactory) {
+        Jackson2JsonRedisSerializer<Bubble> serializer = new Jackson2JsonRedisSerializer<>(Bubble.class);
+
+        RedisSerializationContext.RedisSerializationContextBuilder<String, Bubble> builder =
+            RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
+
+        RedisSerializationContext<String, Bubble> context = builder.value(serializer).build();
 
         return new ReactiveRedisTemplate<>(connectionFactory, context);
     }
