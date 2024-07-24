@@ -4,6 +4,7 @@ plugins {
 	id("io.spring.dependency-management") version "1.1.5"
 	id("org.graalvm.buildtools.native") version "0.9.28"
 	id("dev.hilla") version "2.5.5"
+	id("com.adarshr.test-logger") version "4.0.0"
 }
 
 group = "dev.miscsb"
@@ -54,4 +55,5 @@ dependencyManagement {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	testLogging.showStandardStreams = true
 }
