@@ -34,7 +34,7 @@ public class KeyUtils {
         return sb.toString();
     }
 
-    private static final int GENDER_COUNT = 10;
+    private static final int GENDER_COUNT = 4;
 
     public static final int parseGender(String gender) {
         return switch (gender) {

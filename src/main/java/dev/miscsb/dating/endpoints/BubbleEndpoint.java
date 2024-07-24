@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import dev.hilla.Endpoint;
+import static dev.miscsb.dating.FunctionalUtils.*;
 import dev.miscsb.dating.KeyUtils;
 import dev.miscsb.dating.model.Bubble;
 import dev.miscsb.dating.model.Profile;
@@ -55,12 +56,10 @@ public class BubbleEndpoint {
     }
 
     public Mono<Boolean> attachUserToBubble(String userId, String bubbleId) {
-        Mono<Bubble> mb = bubbleOps.opsForValue().get(KeyUtils.bid(bubbleId));
-        Mono<Profile> mp = profileOps.opsForValue().get(KeyUtils.uid(userId));
-        return mp.flatMap(profile -> mb.flatMap(bubble -> {
-            var m1 = reactiveStringTemplate.opsForSet().add(KeyUtils.bid(bubbleId, "members"), userId);
-            var m2 = reactiveStringTemplate.opsForValue().set(KeyUtils.uid(userId, "bubble"), bubbleId);
-            return m1.flatMap(x -> m2.map(y -> true));
-        }));
+        var mb = bubbleOps.opsForValue().get(KeyUtils.bid(bubbleId));
+        var mp = profileOps.opsForValue().get(KeyUtils.uid(userId));
+        var m1 = reactiveStringTemplate.opsForSet().add(KeyUtils.bid(bubbleId, "members"), userId);
+        var m2 = reactiveStringTemplate.opsForValue().set(KeyUtils.uid(userId, "bubble"), bubbleId);
+        return Mono.zip(mp, mb).then(Mono.zip(m1, m2).map(constant(true)));
     }
 }
