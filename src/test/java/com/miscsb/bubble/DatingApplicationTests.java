@@ -1,4 +1,4 @@
-package dev.miscsb.dating;
+package com.miscsb.bubble;
 
 import static org.junit.Assert.assertTrue;
 
@@ -10,13 +10,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import dev.miscsb.dating.configuration.RedisConfig;
-import dev.miscsb.dating.endpoints.BubbleEndpoint;
-import dev.miscsb.dating.endpoints.MatchingEndpoint;
-import dev.miscsb.dating.endpoints.ProfileEndpoint;
-import dev.miscsb.dating.model.Bubble;
-import dev.miscsb.dating.model.Profile;
-import static dev.miscsb.dating.FunctionalUtils.*;
+import com.miscsb.bubble.configuration.RedisConfig;
+import com.miscsb.bubble.endpoints.BubbleEndpoint;
+import com.miscsb.bubble.endpoints.MatchingEndpoint;
+import com.miscsb.bubble.endpoints.ProfileEndpoint;
+import com.miscsb.bubble.model.Bubble;
+import com.miscsb.bubble.model.Profile;
+
+import static com.miscsb.bubble.FunctionalUtils.*;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

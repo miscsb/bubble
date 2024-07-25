@@ -1,4 +1,4 @@
-package dev.miscsb.dating;
+package com.miscsb.bubble;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.TestConfiguration;

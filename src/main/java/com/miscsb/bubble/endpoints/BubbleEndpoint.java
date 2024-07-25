@@ -1,19 +1,19 @@
-package dev.miscsb.dating.endpoints;
+package com.miscsb.bubble.endpoints;
 
 import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicLong;
 import org.springframework.data.redis.support.collections.*;
-import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RestController;
 
-import static dev.miscsb.dating.FunctionalUtils.*;
-import dev.miscsb.dating.KeyUtils;
-import dev.miscsb.dating.model.Bubble;
-import dev.miscsb.dating.model.Profile;
+import static com.miscsb.bubble.FunctionalUtils.*;
+import com.miscsb.bubble.KeyUtils;
+import com.miscsb.bubble.model.Bubble;
+import com.miscsb.bubble.model.Profile;
 import reactor.core.publisher.Mono;
 
-@Component
+@RestController
 public class BubbleEndpoint {
     private final ReactiveRedisOperations<String, Bubble> bubbleOps;
     private final ReactiveRedisOperations<String, Profile> profileOps;

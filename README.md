@@ -1,4 +1,4 @@
-# misc-dating-app (pending name)
+# Bubble (pending name)
 
 Just another dating app, but with a twist. Create a profile, join a local bubble, and find your match today.
 

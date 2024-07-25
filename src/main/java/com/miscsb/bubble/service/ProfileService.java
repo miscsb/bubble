@@ -1,4 +1,4 @@
-package dev.miscsb.dating.endpoints;
+package com.miscsb.bubble.service;
 
 import java.util.List;
 
@@ -8,22 +8,21 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicLong;
 import org.springframework.data.redis.support.collections.DefaultRedisList;
 import org.springframework.data.redis.support.collections.RedisList;
-import org.springframework.stereotype.Component;
 
-import dev.miscsb.dating.KeyUtils;
-import static dev.miscsb.dating.FunctionalUtils.*;
-import dev.miscsb.dating.model.Profile;
+import com.miscsb.bubble.KeyUtils;
+import com.miscsb.bubble.api.proto.ProfileServiceGrpc;
+import static com.miscsb.bubble.FunctionalUtils.*;
+import com.miscsb.bubble.model.Profile;
 import reactor.core.publisher.Mono;
 
-@Component
-public class ProfileEndpoint {
+public class ProfileService extends ProfileServiceGrpc.ProfileServiceImplBase {
 
     private final ReactiveRedisOperations<String, Profile> profileOps;
     private final RedisAtomicLong userIdCounter;
     private final RedisList<String> userIdList;
     private final ReactiveStringRedisTemplate reactiveStringRedisTemplate;
 
-    public ProfileEndpoint(ReactiveRedisOperations<String, Profile> profileOps, StringRedisTemplate stringTemplate,
+    public ProfileService(ReactiveRedisOperations<String, Profile> profileOps, StringRedisTemplate stringTemplate,
             ReactiveStringRedisTemplate reactiveStringRedisTemplate) {
         this.profileOps = profileOps;
         this.userIdCounter = new RedisAtomicLong(KeyUtils.global("uid"), stringTemplate.getConnectionFactory());

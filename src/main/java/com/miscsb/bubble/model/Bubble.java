@@ -1,4 +1,4 @@
-package dev.miscsb.dating.model;
+package com.miscsb.bubble.model;
 
 import org.springframework.data.annotation.Id;
 

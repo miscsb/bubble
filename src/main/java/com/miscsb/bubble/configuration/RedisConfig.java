@@ -1,4 +1,4 @@
-package dev.miscsb.dating.configuration;
+package com.miscsb.bubble.configuration;
 
 import io.lettuce.core.ClientOptions;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,8 +12,8 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import dev.miscsb.dating.model.Bubble;
-import dev.miscsb.dating.model.Profile;
+import com.miscsb.bubble.model.Bubble;
+import com.miscsb.bubble.model.Profile;
 
 @Configuration
 @Primary

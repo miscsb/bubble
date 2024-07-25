@@ -1,0 +1,31 @@
+syntax = "proto3";
+package com.miscsb.bubble;
+ 
+option java_package = "com.miscsb.bubble.api.proto";
+option java_outer_classname = "DatingProto";
+option java_multiple_files = true;
+
+message ProfileInfo {
+    string          firstName         = 1;
+    string          lastName          = 2;
+    string          pronouns          = 3;
+    string          gender            = 4;
+    repeated string preferredGenders  = 5;
+    int32           birthYear         = 6;
+    string          description       = 7;
+}
+
+message ProfileId {
+    int64 id = 1;
+}
+
+message Profile {
+    ProfileId   profileId   = 1;
+    ProfileInfo profileInfo = 2;
+}
+
+service ProfileService {
+    rpc createUser (ProfileInfo)    returns (ProfileId);
+    rpc updateUser (Profile)        returns (ProfileId);
+    rpc getUser    (ProfileId)      returns (Profile);
+}

@@ -1,8 +1,9 @@
-package dev.miscsb.dating.endpoints;
+package com.miscsb.bubble.endpoints;
 
-import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Component
+@RestController
 public class HelloEndpoint {
 
     /**
@@ -23,6 +24,7 @@ public class HelloEndpoint {
      * @param name that assumed to be nonnull
      * @return a nonnull greeting
      */
+    @GetMapping("/hello")
     public String sayHello(String name) {
         if (name.isEmpty()) {
             return "Hello stranger";

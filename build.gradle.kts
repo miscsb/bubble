@@ -1,16 +1,24 @@
+import com.google.protobuf.gradle.*
+
 plugins {
 	java
-	id("org.springframework.boot") version "3.2.6"
-	id("io.spring.dependency-management") version "1.1.5"
-	id("org.graalvm.buildtools.native") version "0.9.28"
-	id("com.adarshr.test-logger") version "4.0.0"
+	id("org.springframework.boot")            version "3.3.2"
+	id("io.spring.dependency-management")     version "1.1.5"
+	id("org.graalvm.buildtools.native")       version "0.9.28"
+	id("com.adarshr.test-logger")             version "4.0.0"
+	id("com.google.protobuf")                 version "0.9.4"
 }
 
-group = "dev.miscsb"
-version = "0.0.1-SNAPSHOT"
+	group 					= "com.miscsb"
+	version 				= "0.0.1-SNAPSHOT"
+val protobufVersion 		= "3.6.1"
+val grpcVersion 			= "1.41.0"
+val reactiveGrpcVersion 	= "1.2.4"
+val architecture			= "osx-x86_64"
+val generatedFilesBaseDir 	= "build/generated/source/proto"
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_22
 }
 
 configurations {
@@ -24,6 +32,14 @@ repositories {
 }
 
 dependencies {
+	// gRPC dependencies
+	implementation("io.grpc:grpc-protobuf:${grpcVersion}")
+	implementation("io.grpc:grpc-stub:${grpcVersion}")
+	implementation("com.salesforce.servicelibs:reactor-grpc-stub:${reactiveGrpcVersion}")
+	implementation("com.google.protobuf:protobuf-java:${protobufVersion}")
+	implementation("net.devh:grpc-server-spring-boot-starter:2.13.1.RELEASE")
+
+	// Spring Boot dependencies
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
 	// implementation("org.springframework.boot:spring-boot-starter-security")
@@ -32,15 +48,44 @@ dependencies {
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	annotationProcessor("org.projectlombok:lombok")
+
+	// Test dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("io.projectreactor:reactor-test")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-	
-	// https://mvnrepository.com/artifact/io.netty/netty-resolver-dns-native-macos
-	runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.110.Final:osx-aarch_64")
+
+	// Other dependencies
+	// runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.110.Final:osx-aarch_64")
+	implementation("javax.annotation:javax.annotation-api:1.3.2")
+}
+
+protobuf {
+	protoc {
+	// The artifact spec for the Protobuf Compiler
+	artifact = "com.google.protobuf:protoc:${protobufVersion}:${architecture}"
+	}
+	plugins {
+		// Optional: an artifact spec for a protoc plugin, with "grpc" as
+		// the identifier, which can be referred to in the "plugins"
+		// container of the "generateProtoTasks" closure.
+		id("grpc") {
+			artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}:${architecture}"
+		}
+		id("reactor") {
+			artifact = "com.salesforce.servicelibs:reactor-grpc:${reactiveGrpcVersion}"
+		}
+	}
+	generateProtoTasks {
+		ofSourceSet("main").forEach {
+			it.plugins {
+				id("grpc") { }
+				id("reactor") { }
+			}
+		}
+	}
 }
 
 tasks.withType<Test> {
