@@ -6,16 +6,11 @@ import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import com.vaadin.flow.server.auth.AnonymousAllowed;
-
-import dev.hilla.Endpoint;
 import dev.miscsb.dating.KeyUtils;
 import dev.miscsb.dating.model.Profile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@Endpoint
-@AnonymousAllowed
 @Component
 public class MatchingEndpoint {
     private final ReactiveStringRedisTemplate template;
@@ -31,7 +26,7 @@ public class MatchingEndpoint {
         var m2 = template.opsForValue().get(KeyUtils.uid(userId, "bubble"));
         return Mono.zip(m1, m2).flux().flatMap(tup -> {
             List<String> genderChannels = KeyUtils.genderChannelsIn(tup.getT1().gender(), tup.getT1().preferredGenders());
-            String key = "temp:" + userId + ":match";
+            String key = KeyUtils.temp(userId, "match");
             var createSet = template.opsForSet().unionAndStore(genderChannels, key).flux();
             return createSet.flatMap(setCount ->
                 template.opsForSet().intersect(List.of(key, KeyUtils.bid(tup.getT2(), "members")))

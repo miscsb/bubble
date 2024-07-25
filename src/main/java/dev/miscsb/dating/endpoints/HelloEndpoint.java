@@ -1,10 +1,8 @@
 package dev.miscsb.dating.endpoints;
 
-import com.vaadin.flow.server.auth.AnonymousAllowed;
-import dev.hilla.Endpoint;
+import org.springframework.stereotype.Component;
 
-@Endpoint
-@AnonymousAllowed
+@Component
 public class HelloEndpoint {
 
     /**

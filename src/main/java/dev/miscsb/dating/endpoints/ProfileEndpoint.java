@@ -10,16 +10,11 @@ import org.springframework.data.redis.support.collections.DefaultRedisList;
 import org.springframework.data.redis.support.collections.RedisList;
 import org.springframework.stereotype.Component;
 
-import com.vaadin.flow.server.auth.AnonymousAllowed;
-
-import dev.hilla.Endpoint;
 import dev.miscsb.dating.KeyUtils;
 import static dev.miscsb.dating.FunctionalUtils.*;
 import dev.miscsb.dating.model.Profile;
 import reactor.core.publisher.Mono;
 
-@Endpoint
-@AnonymousAllowed
 @Component
 public class ProfileEndpoint {
 
