@@ -1,6 +1,6 @@
 package com.miscsb.bubble;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.time.Duration;
@@ -11,9 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.miscsb.bubble.configuration.RedisConfig;
-import com.miscsb.bubble.endpoints.BubbleEndpoint;
-import com.miscsb.bubble.endpoints.MatchingEndpoint;
-import com.miscsb.bubble.endpoints.ProfileEndpoint;
+import com.miscsb.bubble.controller.BubbleController;
+import com.miscsb.bubble.controller.MatchingController;
+import com.miscsb.bubble.controller.ProfileController;
 import com.miscsb.bubble.model.Bubble;
 import com.miscsb.bubble.model.Profile;
 
@@ -26,47 +26,63 @@ import reactor.core.publisher.Mono;
 class DatingApplicationTests {
 
 	@Autowired
-	ProfileEndpoint profileEndpoint;
+	ProfileController profileEndpoint;
 	@Autowired
-	BubbleEndpoint bubbleEndpoint;
+	BubbleController bubbleEndpoint;
 	@Autowired
-	MatchingEndpoint matchingEndpoint;
+	MatchingController matchingEndpoint;
 
 	// @Test
-	// public void testProfileCreation() {
-	// String profileId = profileEndpoint.createUser("Samuel", "B.", "he/him",
-	// "Male", List.of("Female"), 2005, "fun loving dude in the nyc area").block();
-	// Profile profile = profileEndpoint.getUser(profileId).block();
-	// assertTrue(profile.firstName().equals("Samuel"));
+	// public void testProfilesSynchronous() {
+	// Profile profileSent = new Profile("Samuel", "B.", "he/him", "Male",
+	// List.of("Female"), 2005, "fun loving dude in the nyc area");
+	// String profileId = profileEndpoint.createUser(profileSent).block();
+	// Profile profileReceived = profileEndpoint.getUser(profileId).block();
+	// assertTrue(profileReceived.equals(profileSent));
 
-	// String bubbleId = bubbleEndpoint.createBubble("New York", 0, 0).block();
-	// Bubble bubble = bubbleEndpoint.getBubble(bubbleId).block();
-	// assertTrue(bubble.bubbleName().equals("New York"));
+	// Bubble bubbleSent = new Bubble("New York", 0, 0);
+	// String bubbleId = bubbleEndpoint.createBubble(bubbleSent).block();
+	// Bubble bubbleReceived = bubbleEndpoint.getBubble(bubbleId).block();
+	// assertTrue(bubbleReceived.equals(bubbleSent));
 
 	// bubbleEndpoint.attachUserToBubble(profileId, bubbleId).block();
 	// }
 
 	@Test
-	public void testMatching() {
-		var mb1 = bubbleEndpoint
-			.createBubble("New York", 0.0, 0.0);
-		var mb2 = bubbleEndpoint
-			.createBubble("San Francisco", 10.0, 0.0);
-		var m1 = profileEndpoint
-			.createUser("John", "D.", "he/him", "Male", List.of("Female"), 2000, "Fun loving dude in the NYC area");
-		var m2 = profileEndpoint
-			.createUser("Jane", "D.", "she/her", "Female", List.of("Male"), 1999, "Fun loving girl in the NYC area");
-		var m3 = profileEndpoint
-			.createUser("Jake", "P.", "he/him", "Male", List.of("Female, Male"), 1999, "Fun loving girl in the SF area");
-		var res = Mono.zip(mb1, mb2).flux().flatMap(bubbles -> Mono.zip(m1, m2, m3).flux().flatMap(users -> {
-				var a1 = bubbleEndpoint.attachUserToBubble(users.getT1(), bubbles.getT1());
-				var a2 = bubbleEndpoint.attachUserToBubble(users.getT2(), bubbles.getT1());
-				var a3 = bubbleEndpoint.attachUserToBubble(users.getT3(), bubbles.getT1());
-				var match = matchingEndpoint.getMatches(users.getT3());
-				return Mono.zip(a1, a2, a3).flux().flatMap(constant(match));
-			})
-		).flatMap(profileEndpoint::getUser);
-		System.out.println(res.collectList().block(Duration.ofSeconds(10)));
+	public void testMatchingSynchronous() {
+		String bid1 = bubbleEndpoint.createBubble(new Bubble("NY", 0.0, 0.0)).block();
+		String bid2 = bubbleEndpoint.createBubble(new Bubble("SF", 10.0, 0.0)).block();
+		String uid1 = profileEndpoint.createUser(
+				new Profile("John", "D.", "he/him", "Male", List.of("Female"), 2000, "Fun loving dude in the NYC area"))
+				.block();
+		String uid2 = profileEndpoint.createUser(new Profile("Jane", "D.", "she/her", "Female", List.of("Male"), 1999,
+				"Fun loving girl in the NYC area")).block();
+		String uid3 = profileEndpoint.createUser(new Profile("Jake", "P.", "he/him", "Male", List.of("Female", "Male"),
+				1999, "Fun loving girl in the SF area")).block();
+
+		bubbleEndpoint.attachUserToBubble(uid1, bid1).block();
+		bubbleEndpoint.attachUserToBubble(uid2, bid1).block();
+		bubbleEndpoint.attachUserToBubble(uid3, bid1).block();
+		var list1 = matchingEndpoint.getMatches(uid3).collectList().block(Duration.ofSeconds(5));
+
+		bubbleEndpoint.attachUserToBubble(uid3, bid2).block();
+		var list2 = matchingEndpoint.getMatches(uid3).collectList().block(Duration.ofSeconds(5));
+
+		assertTrue(list1.equals(List.of("2")));
+		assertTrue(list2.equals(List.of()));
+	}
+
+	@Test
+	public void testBubbleUpdateSynchronous() {
+		Bubble ver1 = new Bubble("PARTY CITY!", 0.0, 0.0);
+		String bid = bubbleEndpoint.createBubble(ver1).block();
+		Bubble returned1 = bubbleEndpoint.getBubble(bid).block();
+		assertEquals(ver1, returned1);
+		
+		Bubble ver2 = new Bubble("doomer city", 0.0, 0.0);
+		bubbleEndpoint.updateBubble(bid, ver2).block();
+		Bubble returned2 = bubbleEndpoint.getBubble(bid).block();
+		assertEquals(ver2, returned2);
 	}
 
 	@Test

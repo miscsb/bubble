@@ -1,11 +1,7 @@
 package com.miscsb.bubble.model;
 
-import org.springframework.data.annotation.Id;
-
 public record Bubble(
-    @Id String bubbleId,
-    String bubbleName,
-    double lat,
-    double lon,
-    long count
-) {}
+        String bubbleName,
+        double lat,
+        double lon) {
+}

@@ -58,8 +58,10 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 	// Other dependencies
-	// runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.110.Final:osx-aarch_64")
+	runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.110.Final:osx-aarch_64")
 	implementation("javax.annotation:javax.annotation-api:1.3.2")
+	implementation("org.slf4j:slf4j-simple:1.7.32")
+	testImplementation("ch.qos.logback:logback-classic:1.5.6")
 }
 
 protobuf {

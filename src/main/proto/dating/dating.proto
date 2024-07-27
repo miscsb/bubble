@@ -5,7 +5,7 @@ option java_package = "com.miscsb.bubble.api.proto";
 option java_outer_classname = "DatingProto";
 option java_multiple_files = true;
 
-message ProfileInfo {
+message ProfileDto {
     string          firstName         = 1;
     string          lastName          = 2;
     string          pronouns          = 3;
@@ -15,17 +15,33 @@ message ProfileInfo {
     string          description       = 7;
 }
 
-message ProfileId {
+message ProfileCreationRequestDto {
+    ProfileDto data = 1;
+}
+
+message ProfileCreationResponseDto {
     int64 id = 1;
 }
 
-message Profile {
-    ProfileId   profileId   = 1;
-    ProfileInfo profileInfo = 2;
+message ProfileUpdateRequestDto {
+    int64 id = 1;
+    ProfileDto data = 2;
+}
+
+message ProfileUpdateResponseDto {
+    reserved 1, 2;
+}
+
+message ProfileGetRequestDto {
+    int64 id = 1;
+}
+
+message ProfileGetResponseDto {
+    ProfileDto data = 1;
 }
 
 service ProfileService {
-    rpc createUser (ProfileInfo)    returns (ProfileId);
-    rpc updateUser (Profile)        returns (ProfileId);
-    rpc getUser    (ProfileId)      returns (Profile);
+    rpc createUser (ProfileCreationRequestDto) returns (ProfileCreationResponseDto);
+    rpc updateUser (ProfileUpdateRequestDto)   returns (ProfileUpdateResponseDto);
+    rpc getUser    (ProfileGetRequestDto)      returns (ProfileGetResponseDto);
 }
