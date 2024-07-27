@@ -5,6 +5,8 @@ option java_package = "com.miscsb.bubble.api.proto";
 option java_outer_classname = "DatingProto";
 option java_multiple_files = true;
 
+// PROFILES
+
 message ProfileDto {
     string          firstName         = 1;
     string          lastName          = 2;
@@ -15,33 +17,70 @@ message ProfileDto {
     string          description       = 7;
 }
 
-message ProfileCreationRequestDto {
-    ProfileDto data = 1;
-}
+message CreateProfileRequest    { ProfileDto data = 1; }
+message CreateProfileResponse   { int64 uid = 1; }
 
-message ProfileCreationResponseDto {
-    int64 id = 1;
-}
+message UpdateProfileRequest    { int64 uid = 1; ProfileDto data = 2; }
+message UpdateProfileResponse   { reserved 1, 2; }
 
-message ProfileUpdateRequestDto {
-    int64 id = 1;
-    ProfileDto data = 2;
-}
+message DeleteProfileRequest    { int64 uid = 1; }
+message DeleteProfileResponse   { reserved 1, 2; }
 
-message ProfileUpdateResponseDto {
-    reserved 1, 2;
-}
-
-message ProfileGetRequestDto {
-    int64 id = 1;
-}
-
-message ProfileGetResponseDto {
-    ProfileDto data = 1;
-}
+message GetProfileRequest       { int64 uid = 1; }
+message GetProfileResponse      { ProfileDto data = 1; }
 
 service ProfileService {
-    rpc createUser (ProfileCreationRequestDto) returns (ProfileCreationResponseDto);
-    rpc updateUser (ProfileUpdateRequestDto)   returns (ProfileUpdateResponseDto);
-    rpc getUser    (ProfileGetRequestDto)      returns (ProfileGetResponseDto);
+    rpc createUser (CreateProfileRequest) returns (CreateProfileResponse);
+    rpc    getUser    (GetProfileRequest) returns    (GetProfileResponse);
+    rpc updateUser (UpdateProfileRequest) returns (UpdateProfileResponse);
+    rpc deleteUser (DeleteProfileRequest) returns (DeleteProfileResponse);
+}
+
+// BUBBLES
+
+message BubbleDto {
+    string name = 1;
+    double lat  = 2;
+    double lon  = 3;
+}
+
+message CreateBubbleRequest     { BubbleDto data = 1; }
+message CreateBubbleResponse    { int64 bid = 1; }
+
+message UpdateBubbleRequest     { int64 bid = 1; BubbleDto data = 2; }
+message UpdateBubbleResponse    { reserved 1, 2; }
+
+message DeleteBubbleRequest     { int64 bid = 1; }
+message DeleteBubbleResponse    { reserved 1, 2; }
+
+message GetBubbleRequest        { int64 bid = 1; }
+message GetBubbleResponse       { BubbleDto data = 1; }
+
+message ResetUserBubbleRequest  { int64 uid = 1; }
+message ResetUserBubbleResponse { reserved 1, 2; }
+
+message SetUserBubbleRequest    { int64 uid = 1; int64 bid = 2; }
+message SetUserBubbleResponse   { reserved 1, 2; }
+
+message GetUserBubbleRequest    { int64 uid = 1; }
+message GetUserBubbleResponse   { int64 bid = 1; }
+
+service BubbleService {
+    rpc createBubble (CreateBubbleRequest) returns (CreateBubbleResponse);
+    rpc    getBubble    (GetBubbleRequest) returns    (GetBubbleResponse);
+    rpc updateBubble (UpdateBubbleRequest) returns (UpdateBubbleResponse);
+    rpc deleteBubble (DeleteBubbleRequest) returns (DeleteBubbleResponse);
+
+    rpc resetUserBubble (ResetUserBubbleRequest) returns (ResetUserBubbleResponse);
+    rpc   setUserBubble   (SetUserBubbleRequest) returns   (SetUserBubbleResponse);
+    rpc   getUserBubble   (GetUserBubbleRequest) returns   (GetUserBubbleResponse);
+}
+
+// MATCHING
+
+message GetMatchesRequest   { int64 uid = 1; }
+message GetMatchesResponse  { int64 uid = 1; }
+
+service MatchingService {
+    rpc getMatches (GetMatchesRequest) returns (stream GetMatchesResponse);
 }

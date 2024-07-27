@@ -20,23 +20,20 @@ public class BubbleController {
 
     private static final Logger logger = LoggerFactory.getLogger(BubbleController.class);
 
-    private final ReactiveRedisOperations<String, Bubble> bubbleOps;
-    private final ReactiveRedisOperations<String, Profile> profileOps;
+    private final ReactiveRedisOperations<String, Bubble> bubbles;
     private final RedisAtomicLong bubbleIdCounter;
     private final RedisList<String> bubbleIdList;
-    private final ReactiveStringRedisTemplate reactiveStringTemplate;
+    private final ReactiveStringRedisTemplate template;
 
-    public BubbleController(ReactiveRedisOperations<String, Bubble> bubbleOps,
-            ReactiveRedisOperations<String, Profile> profileOps,
-            ReactiveStringRedisTemplate reactiveStringTemplate,
-            StringRedisTemplate stringTemplate) {
+    public BubbleController(ReactiveRedisOperations<String, Bubble> bubbles,
+            ReactiveRedisOperations<String, Profile> profiles,
+            ReactiveStringRedisTemplate template,
+            StringRedisTemplate templateSync) {
         logger.info(getClass() + " instance initialized");
-        this.bubbleOps = bubbleOps;
-        this.profileOps = profileOps;
-        this.bubbleIdCounter = new RedisAtomicLong(KeyUtils.global("bid"),
-                stringTemplate.getConnectionFactory());
-        this.bubbleIdList = new DefaultRedisList<String>(KeyUtils.global("bubbles"), stringTemplate);
-        this.reactiveStringTemplate = reactiveStringTemplate;
+        this.bubbles = bubbles;
+        this.bubbleIdCounter = new RedisAtomicLong(KeyUtils.global("bid"), templateSync.getConnectionFactory());
+        this.bubbleIdList = new DefaultRedisList<String>(KeyUtils.global("bubbles"), templateSync);
+        this.template = template;
     }
 
     public Mono<String> createBubble(Bubble bubble) {
@@ -45,43 +42,60 @@ public class BubbleController {
                 .flatMap(peek(bubbleIdList::add)); // Blocking call 2
         return create.flatMap(id -> {
             logger.info("Request to create bubble " + bubble + " at bid " + id);
-            var m1 = bubbleOps.opsForValue().set(KeyUtils.bid(id), bubble);
+            var m1 = bubbles.opsForValue().set(KeyUtils.bid(id), bubble);
             return m1.map(constant(id));
         });
     }
 
     public Mono<Unit> updateBubble(String id, Bubble bubble) {
-        var guard = guard(bubbleOps::hasKey, () -> new RuntimeException("Bubble ID does not exist"));
-        return optional(Mono.just(KeyUtils.bid(id)).flatMap(guard)
+        var guard = guard(template::hasKey, () -> new RuntimeException("Bubble ID does not exist"));
+        return Mono.just(KeyUtils.bid(id)).flatMap(guard)
                 .flatMap(peek(() -> logger.info("Request to update bubble at bid " + id)))
-                .flatMap(key -> bubbleOps.opsForValue().set(key, bubble)));
+                .flatMap(key -> bubbles.opsForValue().set(key, bubble)).map(Unit::instance);
+    }
+
+    public Mono<Unit> deleteBubble(String id) {
+        var guard = guard(template::hasKey, () -> new RuntimeException("Bubble ID does not exist"));
+        return Mono.just(KeyUtils.bid(id)).flatMap(guard)
+                .flatMap(peek(() -> logger.info("Request to remove bubble at bid " + id)))
+                .flatMap(key -> bubbles.opsForValue().delete(key)).map(Unit::instance);
     }
 
     public Mono<Bubble> getBubble(String id) {
-        var guard = guard(bubbleOps::hasKey, () -> new RuntimeException("Bubble ID does not exist"));
+        var guard = guard(template::hasKey, () -> new RuntimeException("Bubble ID does not exist"));
         return Mono.just(KeyUtils.bid(id)).flatMap(guard)
-                .flatMap(peek(logger::info))
-                .flatMap(bubbleOps.opsForValue()::get);
+                .flatMap(peek(() -> logger.info("Request to get bubble at bid " + id)))
+                .flatMap(bubbles.opsForValue()::get);
+    }
+
+    public Mono<String> getUserBubble(String userId) {
+        var guard = guard(template::hasKey, () -> new RuntimeException("User ID does not exist"));
+        return Mono.just(KeyUtils.uid(userId)).flatMap(guard)
+                .flatMap(peek(() -> logger.info("Request to get attached bubble at uid " + userId)))
+                .map(constant(KeyUtils.uid(userId, "bubble")))
+                .flatMap(template.opsForValue()::get);
     }
 
     public Mono<Unit> resetUserBubble(String userId) {
         return optional(Mono.just(KeyUtils.uid(userId, "bubble"))
-                .filterWhen(reactiveStringTemplate::hasKey)
-                .flatMap(peek(reactiveStringTemplate.opsForValue()::delete))
+                .flatMap(peek(() -> logger.info("Request to reset attached bubble at uid " + userId)))
+                .filterWhen(template::hasKey)
+                .flatMap(peek(() -> logger.info("Bubble found at uid " + userId + ", resetting user bubble")))
+                .flatMap(peek(template.opsForValue()::delete))
                 .map(bid -> KeyUtils.bid(bid, "members"))
-                .flatMap(peek(key -> reactiveStringTemplate.opsForSet().remove(key, userId))));
+                .flatMap(peek(key -> template.opsForSet().remove(key, userId))));
     }
 
-    public Mono<Unit> attachUserToBubble(String userId, String bubbleId) {
-        var guard1 = guard(bubbleOps::hasKey, () -> new RuntimeException("Bubble ID does not exist"));
+    public Mono<Unit> setUserBubble(String userId, String bubbleId) {
+        var guard1 = guard(template::hasKey, () -> new RuntimeException("Bubble ID does not exist"));
         var m1 = Mono.just(KeyUtils.bid(bubbleId)).flatMap(guard1)
                 .map(constant(KeyUtils.bid(bubbleId, "members")))
-                .flatMap(key -> reactiveStringTemplate.opsForSet().add(key, userId));
+                .flatMap(key -> template.opsForSet().add(key, userId));
 
-        var guard2 = guard(profileOps::hasKey, () -> new RuntimeException("Profile ID does not exist"));
+        var guard2 = guard(template::hasKey, () -> new RuntimeException("User ID does not exist"));
         var m2 = Mono.just(KeyUtils.uid(userId)).flatMap(guard2)
                 .map(constant(KeyUtils.uid(userId, "bubble")))
-                .flatMap(key -> reactiveStringTemplate.opsForValue().set(key, bubbleId));
+                .flatMap(key -> template.opsForValue().set(key, bubbleId));
 
         return Seq.start()
                 .execMaybe(resetUserBubble(userId))

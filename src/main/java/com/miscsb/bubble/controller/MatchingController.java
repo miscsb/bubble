@@ -32,12 +32,12 @@ public class MatchingController {
     }
 
     public Flux<String> getMatches(String userId) {
-        var guard1 = guard(profileOps::hasKey, () -> new RuntimeException("User ID does not exist"));
+        var guard1 = guard(template::hasKey, () -> new RuntimeException("User ID does not exist"));
         var m1 = Mono.just(KeyUtils.uid(userId))
                 .flatMap(guard1)
                 .flatMap(profileOps.opsForValue()::get);
 
-        var guard2 = guard(profileOps::hasKey, () -> new RuntimeException("User ID does not have an attached bubble"));
+        var guard2 = guard(template::hasKey, () -> new RuntimeException("User ID does not have an attached bubble"));
         var m2 = Mono.just(KeyUtils.uid(userId, "bubble"))
                 .flatMap(guard2)
                 .flatMap(template.opsForValue()::get);
