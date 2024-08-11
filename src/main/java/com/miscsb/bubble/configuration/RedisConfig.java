@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -25,16 +26,26 @@ public class RedisConfig {
 
     private final String url;
     private final int port;
+    private final String username;
+    private final RedisPassword password;
 
     public RedisConfig(@Value("${spring.data.redis.host}") String url,
-                       @Value("${spring.data.redis.port}") int port) {
+                       @Value("${spring.data.redis.port}") int port,
+                       @Value("${spring.data.redis.username:#{null}}") String username,
+                       @Value("${spring.data.redis.password:#{null}}") String password) {
         this.url = url;
         this.port = port;
+        this.username = username;
+        this.password = RedisPassword.of(password);
     }
 
     @Bean
     RedisStandaloneConfiguration redisStandaloneConfiguration() {
-        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(url, port);
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        redisStandaloneConfiguration.setHostName(url);
+        redisStandaloneConfiguration.setPort(port);
+        redisStandaloneConfiguration.setUsername(username);
+        redisStandaloneConfiguration.setPassword(password);
         return redisStandaloneConfiguration;
     }
 

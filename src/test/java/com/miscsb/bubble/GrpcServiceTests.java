@@ -50,7 +50,6 @@ public class GrpcServiceTests {
 	}
 
 	@BeforeEach
-	@SuppressWarnings("unchecked")
 	void beforeEach() {
 		try (RedisClient client = RedisClient.create(container.getRedisURI())) {
 			try (StatefulRedisConnection<String, String> connection = client.connect()) {

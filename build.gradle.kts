@@ -16,7 +16,7 @@ val grpcVersion 			= "1.66.0"
 val generatedFilesBaseDir 	= "build/generated/source/proto"
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_22
+	sourceCompatibility = JavaVersion.VERSION_21
 }
 
 configurations {
@@ -39,9 +39,8 @@ dependencies {
 
 	// Spring Boot dependencies
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
-//	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("org.springframework.boot:spring-boot-starter-webflux")
 
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -51,7 +50,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.testcontainers:testcontainers:1.20.1")
 	testImplementation("com.redis:testcontainers-redis:2.2.2")
-//	testImplementation("org.springframework.security:spring-security-test")
+	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
