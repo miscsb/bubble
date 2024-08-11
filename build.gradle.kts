@@ -11,7 +11,7 @@ plugins {
 
 	group 					= "com.miscsb"
 	version 				= "0.0.1-SNAPSHOT"
-val protobufVersion 		= "3.6.1"
+val protobufVersion 		= "4.27.3"
 val grpcVersion 			= "1.41.0"
 val reactiveGrpcVersion 	= "1.2.4"
 val architecture			= "osx-x86_64"
@@ -35,16 +35,15 @@ dependencies {
 	// gRPC dependencies
 	implementation("io.grpc:grpc-protobuf:${grpcVersion}")
 	implementation("io.grpc:grpc-stub:${grpcVersion}")
-	implementation("com.salesforce.servicelibs:reactor-grpc-stub:${reactiveGrpcVersion}")
 	implementation("com.google.protobuf:protobuf-java:${protobufVersion}")
 	implementation("net.devh:grpc-server-spring-boot-starter:2.13.1.RELEASE")
 
 	// Spring Boot dependencies
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
-	implementation("org.springframework.boot:spring-boot-starter-data-redis-reactive")
-	// implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-webflux")
+	
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	annotationProcessor("org.projectlombok:lombok")
@@ -52,8 +51,7 @@ dependencies {
 	// Test dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
-	testImplementation("io.projectreactor:reactor-test")
-	testImplementation("org.springframework.security:spring-security-test")
+	// testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
@@ -76,15 +74,11 @@ protobuf {
 		id("grpc") {
 			artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}:${architecture}"
 		}
-		id("reactor") {
-			artifact = "com.salesforce.servicelibs:reactor-grpc:${reactiveGrpcVersion}"
-		}
 	}
 	generateProtoTasks {
 		ofSourceSet("main").forEach {
 			it.plugins {
 				id("grpc") { }
-				id("reactor") { }
 			}
 		}
 	}

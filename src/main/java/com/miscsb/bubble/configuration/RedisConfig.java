@@ -5,13 +5,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.data.redis.support.atomic.RedisAtomicLong;
+import org.springframework.data.redis.support.collections.DefaultRedisList;
+import org.springframework.data.redis.support.collections.RedisList;
 
+import com.miscsb.bubble.util.KeyUtils;
 import com.miscsb.bubble.model.Bubble;
 import com.miscsb.bubble.model.Profile;
 
@@ -28,26 +32,14 @@ public class RedisConfig {
         this.port = port;
     }
 
-    /**
-     * Redis configuration
-     *
-     * @return redisStandaloneConfiguration
-     */
     @Bean
-    public RedisStandaloneConfiguration redisStandaloneConfiguration() {
+    RedisStandaloneConfiguration redisStandaloneConfiguration() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(url, port);
         return redisStandaloneConfiguration;
     }
 
-    /**
-     * Client Options
-     * Reject requests when redis is in disconnected state and
-     * Redis will retry to connect automatically when redis server is down
-     *
-     * @return client options
-     */
     @Bean
-    public ClientOptions clientOptions() {
+    ClientOptions clientOptions() {
         return ClientOptions.builder()
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
                 .autoReconnect(true)
@@ -55,27 +47,40 @@ public class RedisConfig {
     }
 
     @Bean
-    public ReactiveRedisTemplate<String, Profile> profiles(ReactiveRedisConnectionFactory connectionFactory) {
-        Jackson2JsonRedisSerializer<Profile> serializer = new Jackson2JsonRedisSerializer<>(Profile.class);
-
-        RedisSerializationContext.RedisSerializationContextBuilder<String, Profile> builder =
-            RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
-
-        RedisSerializationContext<String, Profile> context = builder.value(serializer).build();
-
-        return new ReactiveRedisTemplate<>(connectionFactory, context);
+    RedisTemplate<String, Profile> profileTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Profile> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(Profile.class));
+        return template;
     }
 
     @Bean
-    public ReactiveRedisTemplate<String, Bubble> bubbles(ReactiveRedisConnectionFactory connectionFactory) {
-        Jackson2JsonRedisSerializer<Bubble> serializer = new Jackson2JsonRedisSerializer<>(Bubble.class);
-
-        RedisSerializationContext.RedisSerializationContextBuilder<String, Bubble> builder =
-            RedisSerializationContext.newSerializationContext(new StringRedisSerializer());
-
-        RedisSerializationContext<String, Bubble> context = builder.value(serializer).build();
-
-        return new ReactiveRedisTemplate<>(connectionFactory, context);
+    RedisTemplate<String, Bubble> bubbleTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Bubble> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(Bubble.class));
+        return template;
     }
 
+    @Bean
+    RedisList<String> bubbleIdList(StringRedisTemplate template) {
+        return new DefaultRedisList<>(KeyUtils.global("bubbles"), template);
+    }
+
+    @Bean
+    RedisList<String> userIdList(StringRedisTemplate template) {
+        return new DefaultRedisList<>(KeyUtils.global("users"), template);
+    }
+
+    @Bean
+    RedisAtomicLong bubbleIdCounter(RedisConnectionFactory connectionFactory) {
+        return new RedisAtomicLong(KeyUtils.global("bid"), connectionFactory);
+    }
+
+    @Bean
+    RedisAtomicLong userIdCounter(RedisConnectionFactory connectionFactory) {
+        return new RedisAtomicLong(KeyUtils.global("uid"), connectionFactory);
+    }
 }

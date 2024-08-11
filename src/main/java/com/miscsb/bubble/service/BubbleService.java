@@ -1,75 +1,155 @@
 package com.miscsb.bubble.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.support.atomic.RedisAtomicLong;
+import org.springframework.data.redis.support.collections.RedisList;
 import org.springframework.stereotype.Component;
 
+import com.miscsb.bubble.util.KeyUtils;
 import com.miscsb.bubble.api.proto.*;
-import com.miscsb.bubble.controller.BubbleController;
+import com.miscsb.bubble.model.Bubble;
 import com.miscsb.bubble.service.adapter.ProtoAdapter;
 
+import io.grpc.Status;
+import io.grpc.StatusException;
+import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
-import reactor.core.publisher.Mono;
 
 @Component
 @GrpcService
-public class BubbleService extends ReactorBubbleServiceGrpc.BubbleServiceImplBase {
+public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    private final RedisOperations<String, Bubble> bubbleTemplate;
+    private final RedisAtomicLong bubbleIdCounter;
+    private final RedisList<String> bubbleIdList;
+    private final StringRedisTemplate template;
+
+    public BubbleService(RedisOperations<String, Bubble> bubbleTemplate, RedisAtomicLong bubbleIdCounter, RedisList<String> bubbleIdList, StringRedisTemplate template) {
+        this.bubbleTemplate = bubbleTemplate;
+        this.bubbleIdCounter = bubbleIdCounter;
+        this.bubbleIdList = bubbleIdList;
+        this.template = template;
+    }
     
-    @Autowired
-    BubbleController controller;
-
     @Override
-    public Mono<CreateBubbleResponse> createBubble(Mono<CreateBubbleRequest> request) {
-        return request.map(CreateBubbleRequest::getData)
-                .map(ProtoAdapter::fromProto)
-                .flatMap(controller::createBubble)
-                .map(Long::parseLong)
-                .map(bid -> CreateBubbleResponse.newBuilder().setBid(bid).build());
+    public void createBubble(CreateBubbleRequest request, StreamObserver<CreateBubbleResponse> responseObserver) {
+        String bid = String.valueOf(bubbleIdCounter.incrementAndGet());
+        Bubble bubble = ProtoAdapter.fromProto(request.getData());
+        logger.info("Request to create bubble {} at bid {}", bubble, bid);
+        bubbleIdList.add(bid);
+        bubbleTemplate.opsForValue().set(KeyUtils.bid(bid), bubble);
+
+        var response = CreateBubbleResponse.newBuilder().setBid(Long.parseLong(bid)).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+    
+    @Override
+    public void deleteBubble(DeleteBubbleRequest request, StreamObserver<DeleteBubbleResponse> responseObserver) {
+        long bid = request.getBid();
+        logger.info("Request to delete bubble at bid {}", bid);
+        if (!template.hasKey(KeyUtils.bid(bid))) {
+            responseObserver.onError(new StatusException(Status.NOT_FOUND));
+            return;
+        }
+        // Does not update the "bubble" field for users.
+        // Instead, when a user's "bubble" field points to a nonexistent bubble, the field's key will be (lazily) deleted.
+        template.delete(List.of(KeyUtils.bid(bid), KeyUtils.bid(bid, "members")));
+
+        var response = DeleteBubbleResponse.newBuilder().build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
-    public Mono<GetBubbleResponse> getBubble(Mono<GetBubbleRequest> request) {
-        return request.map(GetBubbleRequest::getBid)
-                .map(String::valueOf)
-                .flatMap(controller::getBubble)
-                .map(ProtoAdapter::toProto)
-                .map(bubble -> GetBubbleResponse.newBuilder().setData(bubble).build());
+    public void getBubble(GetBubbleRequest request, StreamObserver<GetBubbleResponse> responseObserver) {
+        long bid = request.getBid();
+        logger.info("Request to get bubble at bid {}", bid);
+        Bubble bubble = bubbleTemplate.opsForValue().get(KeyUtils.bid(bid));
+        if (bubble == null) {
+            responseObserver.onError(new StatusException(Status.NOT_FOUND));
+            return;
+        }
+        var response = GetBubbleResponse.newBuilder().setData(ProtoAdapter.toProto(bubble)).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
-    public Mono<UpdateBubbleResponse> updateBubble(Mono<UpdateBubbleRequest> request) {
-        return request.flatMap(
-                req -> controller.updateBubble(String.valueOf(req.getBid()), ProtoAdapter.fromProto(req.getData())))
-                .map(_ -> UpdateBubbleResponse.newBuilder().build());
+    public void getUserBubble(GetUserBubbleRequest request, StreamObserver<GetUserBubbleResponse> responseObserver) {
+        String uid = String.valueOf(request.getUid());
+        logger.info("Request to get attached bubble at uid {}", uid);
+        if (!template.hasKey(KeyUtils.uid(uid))) {
+            responseObserver.onError(new StatusException(Status.NOT_FOUND));
+            return;
+        }
+        String bid = template.opsForValue().get(KeyUtils.uid(uid, "bubble"));
+        if (!template.hasKey(KeyUtils.bid(bid))) {
+            logger.info("User with uid " + uid + " has attached bubble with " + bid + ", but this bubble does not exist. Resetting user bubble.");
+            template.delete(KeyUtils.uid(uid, "bubble"));
+            bid = null;
+        }
+
+        var builder = GetUserBubbleResponse.newBuilder();
+        if (bid != null) builder.setBid(Long.parseLong(bid));
+        var response = builder.build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
-    public Mono<DeleteBubbleResponse> deleteBubble(Mono<DeleteBubbleRequest> request) {
-        return request.map(DeleteBubbleRequest::getBid)
-                .map(String::valueOf)
-                .flatMap(controller::deleteBubble)
-                .map(_ -> DeleteBubbleResponse.newBuilder().build());
+    public void resetUserBubble(ResetUserBubbleRequest request, StreamObserver<ResetUserBubbleResponse> responseObserver) {
+        String uid = String.valueOf(request.getUid());
+        logger.info("Request to reset attached bubble at uid {}", uid);
+        if (!template.hasKey(KeyUtils.uid(uid))) {
+            responseObserver.onError(new StatusException(Status.NOT_FOUND));
+            return;
+        }
+        String bid = template.opsForValue().getAndDelete(KeyUtils.uid(uid, "bubble"));
+        template.opsForSet().remove(KeyUtils.bid(bid, "members"), uid);
+
+        var response = ResetUserBubbleResponse.newBuilder().build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
-    public Mono<GetUserBubbleResponse> getUserBubble(Mono<GetUserBubbleRequest> request) {
-        return request.map(GetUserBubbleRequest::getUid)
-                .map(String::valueOf)
-                .flatMap(controller::getUserBubble)
-                .map(Long::parseLong)
-                .map(bid -> GetUserBubbleResponse.newBuilder().setBid(bid).build());
-    }
+    public void setUserBubble(SetUserBubbleRequest request, StreamObserver<SetUserBubbleResponse> responseObserver) {
+        String uid = String.valueOf(request.getUid());
+        String bid = String.valueOf(request.getBid());
+        logger.info("Request to set attached bubble at uid {} to bid {}", uid, bid);
+        if (!template.hasKey(KeyUtils.bid(bid)) || !template.hasKey(KeyUtils.uid(uid))) {
+            responseObserver.onError(new StatusException(Status.NOT_FOUND));
+            return;
+        }
+        template.opsForValue().set(KeyUtils.uid(uid, "bubble"), bid);
+        template.opsForSet().add(KeyUtils.bid(bid, "members"), uid);
 
-    @Override
-    public Mono<SetUserBubbleResponse> setUserBubble(Mono<SetUserBubbleRequest> request) {
-        return request.flatMap(req -> controller.setUserBubble(String.valueOf(req.getUid()), String.valueOf(req.getBid())))
-                .map(_ -> SetUserBubbleResponse.newBuilder().build());
+        var response = SetUserBubbleResponse.newBuilder().build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
-
+    
     @Override
-    public Mono<ResetUserBubbleResponse> resetUserBubble(Mono<ResetUserBubbleRequest> request) {
-        return request.map(ResetUserBubbleRequest::getUid)
-                .map(String::valueOf)
-                .flatMap(controller::resetUserBubble)
-                .map(_ -> ResetUserBubbleResponse.newBuilder().build());
+    public void updateBubble(UpdateBubbleRequest request, StreamObserver<UpdateBubbleResponse> responseObserver) {
+        long bid = request.getBid();
+        Bubble bubble = ProtoAdapter.fromProto(request.getData());
+        logger.info("Request to update bubble at bid {}", bid);
+        if (!template.hasKey(KeyUtils.bid(bid))) {
+            responseObserver.onError(new StatusException(Status.NOT_FOUND));
+            return;
+        }
+        bubbleTemplate.opsForValue().set(KeyUtils.bid(bid), bubble);
+
+        var response = UpdateBubbleResponse.newBuilder().build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 }
