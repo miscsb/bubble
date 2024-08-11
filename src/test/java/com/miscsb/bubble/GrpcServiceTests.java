@@ -1,31 +1,63 @@
 package com.miscsb.bubble;
 
-import static org.junit.Assert.*;
 import static com.miscsb.bubble.GrpcServiceTestUtil.*;
 
 import java.util.List;
 
 import com.miscsb.bubble.api.proto.*;
+import com.miscsb.bubble.configuration.RedisConfig;
 import com.miscsb.bubble.service.BubbleService;
 import com.miscsb.bubble.service.MatchingService;
 import com.miscsb.bubble.service.ProfileService;
 import com.miscsb.bubble.service.adapter.ProtoAdapter;
+import com.redis.testcontainers.RedisContainer;
 import io.grpc.StatusException;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.miscsb.bubble.configuration.RedisConfig;
 import com.miscsb.bubble.model.Bubble;
 import com.miscsb.bubble.model.Profile;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(classes = { DatingApplication.class, RedisConfig.class })
+@Testcontainers
 public class GrpcServiceTests {
+
+	@Container
+	private static RedisContainer container;
+	static {
+		container = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag(RedisContainer.DEFAULT_TAG));
+	}
 
 	@Autowired private BubbleService bubbleService;
 	@Autowired private ProfileService profileService;
 	@Autowired private MatchingService matchingService;
+
+	@BeforeAll
+	static void beforeAll() {
+		container.start();
+		System.setProperty("spring.data.redis.host", container.getRedisHost());
+		System.setProperty("spring.data.redis.port", container.getRedisPort() + "");
+	}
+
+	@AfterAll
+	static void afterAll() {
+		container.stop();
+	}
+
+	@BeforeEach
+	@SuppressWarnings("unchecked")
+	void beforeEach() {
+		try (RedisClient client = RedisClient.create(container.getRedisURI())) {
+			try (StatefulRedisConnection<String, String> connection = client.connect()) {
+				connection.sync().flushall();
+			}
+		}
+	}
 
 	@Test
 	public void testMatchingSynchronous() throws StatusException {
@@ -95,7 +127,7 @@ public class GrpcServiceTests {
 		callOne(bubbleService::deleteBubble, deleteBubbleRequest);
 
 		var getBubbleRequest3 = GetBubbleRequest.newBuilder().setBid(bid).build();
-		assertThrows(StatusException.class, () -> callOne(bubbleService::getBubble, getBubbleRequest3));
+		Assertions.assertThrows(StatusException.class, () -> callOne(bubbleService::getBubble, getBubbleRequest3));
 	}
 
 	@Test
@@ -123,7 +155,7 @@ public class GrpcServiceTests {
 		callOne(profileService::deleteUser, deleteProfileRequest);
 
 		var getProfileRequest3 = GetProfileRequest.newBuilder().setUid(uid).build();
-		assertThrows(StatusException.class, () -> callOne(profileService::getUser, getProfileRequest3));
+		Assertions.assertThrows(StatusException.class, () -> callOne(profileService::getUser, getProfileRequest3));
 	}
 
 	@Test

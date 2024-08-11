@@ -17,12 +17,10 @@ public class GrpcServiceTestUtil {
             public void onNext(U value) {
                 result.add(value);
             }
-
             @Override
             public void onError(Throwable t) {
                 error[0] = t;
             }
-
             @Override
             public void onCompleted() {
             }
@@ -45,12 +43,10 @@ public class GrpcServiceTestUtil {
             public void onNext(U value) {
                 result.add(value);
             }
-
             @Override
             public void onError(Throwable t) {
                 error[0] = t;
             }
-
             @Override
             public void onCompleted() {
             }
