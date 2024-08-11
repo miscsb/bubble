@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 import static com.miscsb.bubble.GrpcServiceTestUtil.*;
 
 import java.util.List;
-import java.time.Duration;
 
 import com.miscsb.bubble.api.proto.*;
 import com.miscsb.bubble.service.BubbleService;
@@ -14,7 +13,6 @@ import com.miscsb.bubble.service.adapter.ProtoAdapter;
 import io.grpc.StatusException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.Rule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 

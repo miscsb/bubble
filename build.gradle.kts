@@ -12,9 +12,7 @@ plugins {
 	group 					= "com.miscsb"
 	version 				= "0.0.1-SNAPSHOT"
 val protobufVersion 		= "4.27.3"
-val grpcVersion 			= "1.41.0"
-val reactiveGrpcVersion 	= "1.2.4"
-val architecture			= "osx-x86_64"
+val grpcVersion 			= "1.66.0"
 val generatedFilesBaseDir 	= "build/generated/source/proto"
 
 java {
@@ -35,6 +33,7 @@ dependencies {
 	// gRPC dependencies
 	implementation("io.grpc:grpc-protobuf:${grpcVersion}")
 	implementation("io.grpc:grpc-stub:${grpcVersion}")
+	implementation("io.grpc:protoc-gen-grpc-java:${grpcVersion}")
 	implementation("com.google.protobuf:protobuf-java:${protobufVersion}")
 	implementation("net.devh:grpc-server-spring-boot-starter:2.13.1.RELEASE")
 
@@ -56,7 +55,6 @@ dependencies {
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 	// Other dependencies
-	runtimeOnly("io.netty:netty-resolver-dns-native-macos:4.1.110.Final:osx-aarch_64")
 	implementation("javax.annotation:javax.annotation-api:1.3.2")
 	implementation("org.slf4j:slf4j-simple:1.7.32")
 	testImplementation("ch.qos.logback:logback-classic:1.5.6")
@@ -64,15 +62,11 @@ dependencies {
 
 protobuf {
 	protoc {
-	// The artifact spec for the Protobuf Compiler
-	artifact = "com.google.protobuf:protoc:${protobufVersion}:${architecture}"
+		artifact = "com.google.protobuf:protoc:${protobufVersion}"
 	}
 	plugins {
-		// Optional: an artifact spec for a protoc plugin, with "grpc" as
-		// the identifier, which can be referred to in the "plugins"
-		// container of the "generateProtoTasks" closure.
 		id("grpc") {
-			artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}:${architecture}"
+			artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
 		}
 	}
 	generateProtoTasks {

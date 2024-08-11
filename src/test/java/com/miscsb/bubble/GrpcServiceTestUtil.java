@@ -12,15 +12,17 @@ public class GrpcServiceTestUtil {
     public static <T, U> U callOne(BiConsumer<T, StreamObserver<U>> function, T request) throws StatusException {
         List<U> result = new ArrayList<>();
         Throwable[] error = new Throwable[1];
-        StreamObserver<U> observer = new StreamObserver<U>() {
+        StreamObserver<U> observer = new StreamObserver<>() {
             @Override
             public void onNext(U value) {
                 result.add(value);
             }
+
             @Override
             public void onError(Throwable t) {
                 error[0] = t;
             }
+
             @Override
             public void onCompleted() {
             }
@@ -38,15 +40,17 @@ public class GrpcServiceTestUtil {
     public static <T, U> List<U> callMany(BiConsumer<T, StreamObserver<U>> function, T request) throws StatusException {
         List<U> result = new ArrayList<>();
         Throwable[] error = new Throwable[1];
-        StreamObserver<U> observer = new StreamObserver<U>() {
+        StreamObserver<U> observer = new StreamObserver<>() {
             @Override
             public void onNext(U value) {
                 result.add(value);
             }
+
             @Override
             public void onError(Throwable t) {
                 error[0] = t;
             }
+
             @Override
             public void onCompleted() {
             }
@@ -61,7 +65,7 @@ public class GrpcServiceTestUtil {
     public static <T, U> Optional<U> callOptional(BiConsumer<T, StreamObserver<U>> function, T request) throws StatusException {
         List<U> result = new ArrayList<>();
         Throwable[] error = new Throwable[1];
-        StreamObserver<U> observer = new StreamObserver<U>() {
+        StreamObserver<U> observer = new StreamObserver<>() {
             @Override
             public void onNext(U value) {
                 result.add(value);

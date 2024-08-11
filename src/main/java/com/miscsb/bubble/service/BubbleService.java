@@ -1,7 +1,6 @@
 package com.miscsb.bubble.service;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
     public void deleteBubble(DeleteBubbleRequest request, StreamObserver<DeleteBubbleResponse> responseObserver) {
         long bid = request.getBid();
         logger.info("Request to delete bubble at bid {}", bid);
-        if (!template.hasKey(KeyUtils.bid(bid))) {
+        if (Boolean.FALSE.equals(template.hasKey(KeyUtils.bid(bid)))) {
             responseObserver.onError(new StatusException(Status.NOT_FOUND));
             return;
         }
@@ -86,13 +85,13 @@ public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
     public void getUserBubble(GetUserBubbleRequest request, StreamObserver<GetUserBubbleResponse> responseObserver) {
         String uid = String.valueOf(request.getUid());
         logger.info("Request to get attached bubble at uid {}", uid);
-        if (!template.hasKey(KeyUtils.uid(uid))) {
+        if (Boolean.FALSE.equals(template.hasKey(KeyUtils.uid(uid)))) {
             responseObserver.onError(new StatusException(Status.NOT_FOUND));
             return;
         }
         String bid = template.opsForValue().get(KeyUtils.uid(uid, "bubble"));
-        if (!template.hasKey(KeyUtils.bid(bid))) {
-            logger.info("User with uid " + uid + " has attached bubble with " + bid + ", but this bubble does not exist. Resetting user bubble.");
+        if (Boolean.FALSE.equals(template.hasKey(KeyUtils.bid(bid)))) {
+            logger.info("User with uid {} has attached bubble with {}, but this bubble does not exist. Resetting user bubble.", uid, bid);
             template.delete(KeyUtils.uid(uid, "bubble"));
             bid = null;
         }
@@ -108,7 +107,7 @@ public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
     public void resetUserBubble(ResetUserBubbleRequest request, StreamObserver<ResetUserBubbleResponse> responseObserver) {
         String uid = String.valueOf(request.getUid());
         logger.info("Request to reset attached bubble at uid {}", uid);
-        if (!template.hasKey(KeyUtils.uid(uid))) {
+        if (Boolean.FALSE.equals(template.hasKey(KeyUtils.uid(uid)))) {
             responseObserver.onError(new StatusException(Status.NOT_FOUND));
             return;
         }
@@ -125,7 +124,7 @@ public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
         String uid = String.valueOf(request.getUid());
         String bid = String.valueOf(request.getBid());
         logger.info("Request to set attached bubble at uid {} to bid {}", uid, bid);
-        if (!template.hasKey(KeyUtils.bid(bid)) || !template.hasKey(KeyUtils.uid(uid))) {
+        if (Boolean.FALSE.equals(template.hasKey(KeyUtils.bid(bid))) || Boolean.FALSE.equals(template.hasKey(KeyUtils.uid(uid)))) {
             responseObserver.onError(new StatusException(Status.NOT_FOUND));
             return;
         }
@@ -142,7 +141,7 @@ public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
         long bid = request.getBid();
         Bubble bubble = ProtoAdapter.fromProto(request.getData());
         logger.info("Request to update bubble at bid {}", bid);
-        if (!template.hasKey(KeyUtils.bid(bid))) {
+        if (Boolean.FALSE.equals(template.hasKey(KeyUtils.bid(bid)))) {
             responseObserver.onError(new StatusException(Status.NOT_FOUND));
             return;
         }

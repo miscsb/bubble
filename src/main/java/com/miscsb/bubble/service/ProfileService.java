@@ -68,7 +68,7 @@ public class ProfileService extends ProfileServiceGrpc.ProfileServiceImplBase {
 
         String bid = template.opsForValue().getAndDelete(KeyUtils.uid(uid, "bubble"));
         if (bid != null) {
-            template.opsForSet().remove(KeyUtils.bid(bid, "members"), String.valueOf(uid));
+            template.opsForSet().remove(KeyUtils.bid(bid, "members"), uid);
         }
 
         var response = DeleteProfileResponse.newBuilder().build();

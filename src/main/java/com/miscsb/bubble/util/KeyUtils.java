@@ -59,7 +59,7 @@ public class KeyUtils {
     }
 
     public static String genderChannelOut(int self, long pref) {
-        return new StringBuilder().append("gc:").append(self).append('-').append(pref).toString();
+        return "gc:" + self + '-' + pref;
     }
 
     public static String genderChannelOut(String self, List<String> pref) {
@@ -70,7 +70,7 @@ public class KeyUtils {
         List<String> res = new LinkedList<>();
         for (int i = 0; i < GENDER_COUNT; i++) {
             if (((pref >> i) & 1) == 0) continue;
-            String base = new StringBuilder("gc:").append(i).append('-').toString();
+            String base = "gc:" + i + '-';
             for (int x = 0; x < (1 << GENDER_COUNT); x++) {
                 if (((x >> self) & 1) == 0) continue;
                 res.add(base + x);
