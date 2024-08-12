@@ -20,8 +20,7 @@ import com.miscsb.bubble.util.KeyUtils;
 import com.miscsb.bubble.model.Bubble;
 import com.miscsb.bubble.model.Profile;
 
-@Configuration
-@Primary
+@Primary @Configuration
 public class RedisConfig {
 
     private final String url;

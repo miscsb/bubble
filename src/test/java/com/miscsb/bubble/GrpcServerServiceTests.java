@@ -1,6 +1,6 @@
 package com.miscsb.bubble;
 
-import static com.miscsb.bubble.GrpcServiceTestUtil.*;
+import static com.miscsb.bubble.GrpcTestUtil.*;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(classes = { DatingApplication.class, RedisConfig.class })
 @Testcontainers
-public class GrpcServiceTests {
+public class GrpcServerServiceTests {
 
 	@Container
 	private static RedisContainer container;
@@ -46,6 +46,12 @@ public class GrpcServiceTests {
 
 	@AfterAll
 	static void afterAll() {
+		try (RedisClient client = RedisClient.create(container.getRedisURI())) {
+			try (StatefulRedisConnection<String, String> connection = client.connect()) {
+				connection.sync().shutdown(false);
+			}
+			client.shutdown();
+		}
 		container.stop();
 	}
 

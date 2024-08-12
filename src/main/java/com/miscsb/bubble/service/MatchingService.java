@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 
 import com.miscsb.bubble.util.KeyUtils;
 import com.miscsb.bubble.api.proto.*;
@@ -19,7 +18,6 @@ import io.grpc.StatusException;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 
-@Component
 @GrpcService
 public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase {
     private final Logger logger = LoggerFactory.getLogger(getClass());

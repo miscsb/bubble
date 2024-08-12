@@ -11,7 +11,7 @@ plugins {
 
 	group 					= "com.miscsb"
 	version 				= "0.0.1-SNAPSHOT"
-val protobufVersion 		= "4.27.3"
+val protobufVersion 		= "3.25.3" // ver. 4 breaks this project
 val grpcVersion 			= "1.66.0"
 val generatedFilesBaseDir 	= "build/generated/source/proto"
 
@@ -30,17 +30,19 @@ repositories {
 }
 
 dependencies {
-	// gRPC dependencies
-	implementation("io.grpc:grpc-protobuf:${grpcVersion}")
-	implementation("io.grpc:grpc-stub:${grpcVersion}")
-	implementation("io.grpc:protoc-gen-grpc-java:${grpcVersion}")
+	// gRPC / protobuf dependencies
+	compileOnly("io.grpc:grpc-protobuf:${grpcVersion}")
+	compileOnly("io.grpc:grpc-stub:${grpcVersion}")
+	compileOnly("io.grpc:protoc-gen-grpc-java:${grpcVersion}")
 	implementation("com.google.protobuf:protobuf-java:${protobufVersion}")
 	implementation("net.devh:grpc-server-spring-boot-starter:2.13.1.RELEASE")
 
 	// Spring Boot dependencies
+	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-webflux")
 
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -48,9 +50,9 @@ dependencies {
 
 	// Test dependencies
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.testcontainers:testcontainers:1.20.1")
-	testImplementation("com.redis:testcontainers-redis:2.2.2")
 	testImplementation("org.springframework.security:spring-security-test")
+	testImplementation("com.redis:testcontainers-redis:2.2.2")
+	testImplementation("org.testcontainers:testcontainers")
 	testImplementation("org.testcontainers:junit-jupiter")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 

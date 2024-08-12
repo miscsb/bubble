@@ -8,7 +8,6 @@ import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicLong;
 import org.springframework.data.redis.support.collections.RedisList;
-import org.springframework.stereotype.Component;
 
 import com.miscsb.bubble.util.KeyUtils;
 import com.miscsb.bubble.api.proto.*;
@@ -20,7 +19,6 @@ import io.grpc.StatusException;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 
-@Component
 @GrpcService
 public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
     private final Logger logger = LoggerFactory.getLogger(getClass());
