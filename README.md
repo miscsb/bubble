@@ -1,9 +1,8 @@
 # Bubble
 
 ## Introduction
-At first, I started this project to learn for myself, but I figured that it could be a good template for someone else to
-learn how to make an app with a Java backend. It's a great language. This is my first project with gRPC (as opposed to REST) 
-and my first project with a mobile frontend.
+This is my first project with gRPC (as opposed to REST) and my first project with a mobile frontend. You may use this
+project as a template for your own learning.
 
 Check [Overview](#Overview) for any tools you would like to see in action. Also check [Related Articles](#related-articles)
 for further reading.
