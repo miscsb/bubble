@@ -1,7 +1,7 @@
 # Bubble
 
 ## Introduction
-This is my first project with gRPC (as opposed to REST) and my first project with a mobile frontend. You may use this
+This is my first project with gRPC (as opposed to REST) and my first project with a mobile frontend (this isn't implemented yet!). You can use this
 project as a template for your own learning.
 
 Check [Overview](#Overview) for any tools you would like to see in action. Also check [Related Articles](#related-articles)

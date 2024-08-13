@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import com.miscsb.bubble.model.TwoProfileMatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -24,14 +25,16 @@ public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase
 
     private final StringRedisTemplate template;
     private final RedisTemplate<String, Profile> profileTemplate;
+    private final RedisTemplate<String, TwoProfileMatch> twoProfileMatchTemplate;
 
-    public MatchingService(StringRedisTemplate template, RedisTemplate<String, Profile> profileTemplate) {
+    public MatchingService(StringRedisTemplate template, RedisTemplate<String, Profile> profileTemplate, RedisTemplate<String, TwoProfileMatch> twoProfileMatchTemplate) {
         this.template = template;
         this.profileTemplate = profileTemplate;
+        this.twoProfileMatchTemplate = twoProfileMatchTemplate;
     }
 
     @Override
-    public void getMatches(GetMatchesRequest request, StreamObserver<GetMatchesResponse> responseObserver) {
+    public void getCandidates(GetCandidatesRequest request, StreamObserver<GetCandidatesResponse> responseObserver) {
         long uid = request.getUid();
         Profile profile = profileTemplate.opsForValue().get(KeyUtils.uid(uid));
         if (profile == null) {
@@ -41,7 +44,7 @@ public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase
         }
         // empty match list if the user does not have an associated bubble
         String bid = template.opsForValue().get(KeyUtils.uid(uid, "bubble"));
-        logger.info("Request matches for uid {}, in bubble bid {}", uid, bid);
+        logger.info("Request candidates for uid {}, in bubble bid {}", uid, bid);
         if (bid == null) {
             responseObserver.onCompleted();
             return;
@@ -50,7 +53,7 @@ public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase
         List<String> gcKeys = genderChannels.stream().map(gc -> KeyUtils.bid(bid, gc)).toList();
         for (String result : Objects.requireNonNull(template.opsForSet().union(gcKeys))) {
             if (result.equals(String.valueOf(uid))) continue;
-            var response = GetMatchesResponse.newBuilder().setUid(Long.parseLong(result)).build();
+            var response = GetCandidatesResponse.newBuilder().setUid(Long.parseLong(result)).build();
             responseObserver.onNext(response);
         }
         responseObserver.onCompleted();

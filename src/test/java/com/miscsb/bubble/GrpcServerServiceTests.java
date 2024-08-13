@@ -94,17 +94,17 @@ public class GrpcServerServiceTests {
 		long retrievedBidForUid1 = callOne(bubbleService::getUserBubble, getUserBubbleRequest1).getBid();
 		Assertions.assertEquals(retrievedBidForUid1, bid1);
 
-		var getMatchesRequest1 = GetMatchesRequest.newBuilder().setUid(uid1).build();
-		var matchesForUid1 = callMany(matchingService::getMatches, getMatchesRequest1).stream().map(GetMatchesResponse::getUid).toList();
-		Assertions.assertEquals(matchesForUid1, List.of(uid2));
+		var getCandidatesRequest1 = GetCandidatesRequest.newBuilder().setUid(uid1).build();
+		var candidatesForUid1 = callMany(matchingService::getCandidates, getCandidatesRequest1).stream().map(GetCandidatesResponse::getUid).toList();
+		Assertions.assertEquals(candidatesForUid1, List.of(uid2));
 
 		var setUserBubbleRequest4 = SetUserBubbleRequest.newBuilder().setUid(uid3).setBid(bid2).build();
 		callOne(bubbleService::setUserBubble, setUserBubbleRequest4);
 		Assertions.assertEquals(callOne(bubbleService::getUserBubble, getUserBubbleRequest1).getBid(), bid1);
 
-		var getMatchesRequest2 = GetMatchesRequest.newBuilder().setUid(uid3).build();
-		var matchesForUid3 = callMany(matchingService::getMatches, getMatchesRequest2).stream().map(GetMatchesResponse::getUid).toList();
-		Assertions.assertEquals(matchesForUid3, List.of());
+		var getCandidatesRequest2 = GetCandidatesRequest.newBuilder().setUid(uid3).build();
+		var candidatesForUid3 = callMany(matchingService::getCandidates, getCandidatesRequest2).stream().map(GetCandidatesResponse::getUid).toList();
+		Assertions.assertEquals(candidatesForUid3, List.of());
 	}
 
 	@Test

@@ -78,9 +78,9 @@ service BubbleService {
 
 // MATCHING
 
-message GetMatchesRequest   { int64 uid = 1; }
-message GetMatchesResponse  { int64 uid = 1; }
+message GetCandidatesRequest   { int64 uid = 1; }
+message GetCandidatesResponse  { int64 uid = 1; }
 
 service MatchingService {
-    rpc getMatches (GetMatchesRequest) returns (stream GetMatchesResponse);
+    rpc getCandidates (GetCandidatesRequest) returns (stream GetCandidatesResponse);
 }
