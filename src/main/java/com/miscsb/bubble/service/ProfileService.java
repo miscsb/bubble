@@ -1,5 +1,6 @@
 package com.miscsb.bubble.service;
 
+import com.miscsb.bubble.model.Bubble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,10 +40,8 @@ public class ProfileService extends ProfileServiceGrpc.ProfileServiceImplBase {
         Profile profile = ProtoAdapter.fromProto(request.getData());
         logger.info("Request to create profile {} at uid {}", profile, uid);
 
-        String gc = KeyUtils.genderChannelOut(profile.gender(), profile.preferredGenders());
         userIdList.add(uid);
         profileTemplate.opsForValue().set(KeyUtils.uid(uid), profile);
-        template.opsForSet().add(gc, uid);
 
         var response = CreateProfileResponse.newBuilder().setUid(Long.parseLong(uid)).build();
         responseObserver.onNext(response);
@@ -59,14 +58,14 @@ public class ProfileService extends ProfileServiceGrpc.ProfileServiceImplBase {
             return;
         }
 
-        String gc = KeyUtils.genderChannelOut(profile.gender(), profile.preferredGenders());
         userIdList.remove(uid);
         profileTemplate.delete(KeyUtils.uid(uid));
-        template.opsForSet().remove(gc, uid);
 
         String bid = template.opsForValue().getAndDelete(KeyUtils.uid(uid, "bubble"));
         if (bid != null) {
+            String gc = KeyUtils.genderChannelOut(profile.gender(), profile.preferredGenders());
             template.opsForSet().remove(KeyUtils.bid(bid, "members"), uid);
+            template.opsForSet().remove(KeyUtils.bid(bid, gc), uid);
         }
 
         var response = DeleteProfileResponse.newBuilder().build();
@@ -99,10 +98,14 @@ public class ProfileService extends ProfileServiceGrpc.ProfileServiceImplBase {
         }
         Profile newProfile = ProtoAdapter.fromProto(request.getData());
         profileTemplate.opsForValue().set(KeyUtils.uid(uid), newProfile);
-        String gcOld = KeyUtils.genderChannelOut(oldProfile.gender(), oldProfile.preferredGenders());
-        String gcNew = KeyUtils.genderChannelOut(newProfile.gender(), newProfile.preferredGenders());
-        template.opsForSet().remove(gcOld, uid);
-        template.opsForSet().add(gcNew, uid);
+
+        String bid = template.opsForValue().get(KeyUtils.uid(uid, "bubble"));
+        if (bid != null) {
+            String gcOld = KeyUtils.genderChannelOut(oldProfile.gender(), oldProfile.preferredGenders());
+            String gcNew = KeyUtils.genderChannelOut(newProfile.gender(), newProfile.preferredGenders());
+            template.opsForSet().remove(KeyUtils.bid(bid, gcOld), uid);
+            template.opsForSet().add(KeyUtils.bid(bid, gcNew), uid);
+        }
 
         var response = UpdateProfileResponse.newBuilder().build();
         responseObserver.onNext(response);

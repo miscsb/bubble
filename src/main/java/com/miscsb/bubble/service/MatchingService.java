@@ -47,12 +47,8 @@ public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase
             return;
         }
         List<String> genderChannels = KeyUtils.genderChannelsIn(profile.gender(), profile.preferredGenders());
-        String preferKey = KeyUtils.temp(uid, "match");
-        String bubbleKey = KeyUtils.bid(bid, "members");
-        template.opsForSet().unionAndStore(genderChannels, preferKey);
-        
-        Set<String> results = template.opsForSet().intersect(List.of(preferKey, bubbleKey));
-        for (String result : Objects.requireNonNull(results)) {
+        List<String> gcKeys = genderChannels.stream().map(gc -> KeyUtils.bid(bid, gc)).toList();
+        for (String result : Objects.requireNonNull(template.opsForSet().union(gcKeys))) {
             if (result.equals(String.valueOf(uid))) continue;
             var response = GetMatchesResponse.newBuilder().setUid(Long.parseLong(result)).build();
             responseObserver.onNext(response);

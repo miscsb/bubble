@@ -52,7 +52,7 @@ public class RedisConfig {
     ClientOptions clientOptions() {
         return ClientOptions.builder()
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
-                .autoReconnect(true)
+                .autoReconnect(false) // TODO this should be true in production and false in test
                 .build();
     }
 

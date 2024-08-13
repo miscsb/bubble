@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import java.io.IOException;
+
 @Primary @Configuration
 public class GrpcConfig {
 
@@ -25,8 +27,8 @@ public class GrpcConfig {
     }
 
     @Bean
-    public Server grpcServer(ProfileService profileService, BubbleService bubbleService, MatchingService matchingService) {
-        logger.info("Creating grpc server on port {}", port);
+    public Server grpcServer(ProfileService profileService, BubbleService bubbleService, MatchingService matchingService) throws IOException {
+        logger.info("Starting grpc server on port {}", port);
         var protoReflectionService = ProtoReflectionService.newInstance();
         Server server = ServerBuilder.forPort(port)
                 .addService(profileService)
@@ -35,6 +37,7 @@ public class GrpcConfig {
                 .addService(protoReflectionService)
                 .build();
         protoReflectionService.bindService();
+        server.start();
         return server;
     }
 
