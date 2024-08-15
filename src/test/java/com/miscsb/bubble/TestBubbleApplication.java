@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.context.TestConfiguration;
 
 @TestConfiguration(proxyBeanMethods = false)
-public class TestDatingApplication {
+public class TestBubbleApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.from(DatingApplication::main).with(TestDatingApplication.class).run(args);
+		SpringApplication.from(BubbleApplication::main).with(TestBubbleApplication.class).run(args);
 	}
 
 }

@@ -23,7 +23,7 @@ import com.miscsb.bubble.model.Profile;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(classes = { DatingApplication.class, RedisConfig.class })
+@SpringBootTest(classes = { BubbleApplication.class, RedisConfig.class })
 @Testcontainers
 public class GrpcServerServiceTests {
 

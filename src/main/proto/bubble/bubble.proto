@@ -2,7 +2,7 @@ syntax = "proto3";
 package com.miscsb.bubble;
  
 option java_package = "com.miscsb.bubble.api.proto";
-option java_outer_classname = "DatingProto";
+option java_outer_classname = "BubbleProto";
 option java_multiple_files = true;
 
 // PROFILES
