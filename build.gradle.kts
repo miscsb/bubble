@@ -90,6 +90,9 @@ tasks.withType<Test> {
 }
 
 tasks.withType<JacocoReport> {
+	reports {
+		xml.required = true
+	}
 	dependsOn(tasks.withType<Test>())
 	afterEvaluate {
 		classDirectories.setFrom(files(classDirectories.files.map {
