@@ -15,7 +15,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -47,14 +46,16 @@ jobs:
     # - name: Build with Gradle 8.9
     #   run: gradle build
 
-    - name: JaCoCo Code Coverage Report
-      id: jacoco_reporter
-      uses: PavanMudigonda/jacoco-reporter@v5.0
-      with:
-        coverage_results_path: build/reports/jacoco/test/jacocoTestReport.xml
-        coverage_report_name: Bubble Test Coverage
-        coverage_report_title: JaCoCo
-          
+  test:
+    runs-on: ubuntu-latest
+    steps:  
+      - name: JaCoCo Code Coverage Report
+        id: jacoco_reporter
+        uses: PavanMudigonda/jacoco-reporter@v5.0
+        with:
+          coverage_results_path: build/reports/jacoco/test/jacocoTestReport.xml
+          coverage_report_name: Bubble Test Coverage
+          coverage_report_title: JaCoCo
 
   dependency-submission:
 
