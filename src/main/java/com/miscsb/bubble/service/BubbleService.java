@@ -112,9 +112,9 @@ public class BubbleService extends BubbleServiceGrpc.BubbleServiceImplBase {
             bid = null;
         }
 
-        var builder = GetUserBubbleResponse.newBuilder();
-        if (bid != null) builder.setBid(Long.parseLong(bid));
-        var response = builder.build();
+        var response = GetUserBubbleResponse.newBuilder()
+                .setBid(bid == null ? -1 : Long.parseLong(bid))
+                .build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

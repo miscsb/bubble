@@ -59,7 +59,7 @@ public class RedisConfig {
     ClientOptions clientOptions() {
         return ClientOptions.builder()
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
-                .autoReconnect(false) // TODO this should be true in production and false in test
+                .autoReconnect(true)
                 .build();
     }
 
@@ -90,8 +90,13 @@ public class RedisConfig {
             @Override
             public byte[] serialize(TwoProfileMatch value) throws SerializationException {
                 byte[] buf = new byte[value.profile1().length() + value.profile2().length() + 1];
-                System.arraycopy(value.profile1().getBytes(), 0, buf, 0, value.profile1().length());
-                System.arraycopy(value.profile2().getBytes(), 0, buf, value.profile1().length() + 1, value.profile2().length());
+                if (value.profile1().compareTo(value.profile2()) < 0) {
+                    System.arraycopy(value.profile1().getBytes(), 0, buf, 0, value.profile1().length());
+                    System.arraycopy(value.profile2().getBytes(), 0, buf, value.profile1().length() + 1, value.profile2().length());
+                } else {
+                    System.arraycopy(value.profile2().getBytes(), 0, buf, 0, value.profile2().length());
+                    System.arraycopy(value.profile1().getBytes(), 0, buf, value.profile2().length() + 1, value.profile1().length());
+                }
                 buf[value.profile1().length()] = '#';
                 return buf;
             }

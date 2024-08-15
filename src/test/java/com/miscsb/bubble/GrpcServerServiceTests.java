@@ -164,6 +164,47 @@ public class GrpcServerServiceTests {
 	}
 
 	@Test
+	public void testErrorOnDeleteProfileTwice() throws StatusException {
+		Profile profile = new Profile("Scrooge", "McDuck", "he/him", "Male", List.of("Female"), 1900, "$$$");
+		var createProfileRequest = CreateProfileRequest.newBuilder().setData(ProtoAdapter.toProto(profile)).build();
+		long uid = callOne(profileService::createUser, createProfileRequest).getUid();
+
+		var deleteProfileRequest = DeleteProfileRequest.newBuilder().setUid(uid).build();
+		callOne(profileService::deleteUser, deleteProfileRequest);
+		Assertions.assertThrows(StatusException.class, () -> callOne(profileService::deleteUser, deleteProfileRequest));
+	}
+
+	@Test
+	public void testErrorOnDeleteBubbleTwice() throws StatusException {
+		Bubble bubble = new Bubble("PARTY CITY!", 0.0, 0.0);
+		var createBubbleRequest = CreateBubbleRequest.newBuilder().setData(ProtoAdapter.toProto(bubble)).build();
+		long bid = callOne(bubbleService::createBubble, createBubbleRequest).getBid();
+
+		var deleteBubbleRequest = DeleteBubbleRequest.newBuilder().setBid(bid).build();
+		callOne(bubbleService::deleteBubble, deleteBubbleRequest);
+		Assertions.assertThrows(StatusException.class, () -> callOne(bubbleService::deleteBubble, deleteBubbleRequest));
+	}
+
+	@Test
+	public void testResetUserBubble() throws StatusException {
+		Profile profile = new Profile("Scrooge", "McDuck", "he/him", "Male", List.of("Female"), 1900, "$$$");
+		Bubble bubble = new Bubble("NY", 0.0, 0.0);
+		var createProfileRequest = CreateProfileRequest.newBuilder().setData(ProtoAdapter.toProto(profile)).build();
+		var createBubbleRequest = CreateBubbleRequest.newBuilder().setData(ProtoAdapter.toProto(bubble)).build();
+		long uid = callOne(profileService::createUser, createProfileRequest).getUid();
+		long bid = callOne(bubbleService::createBubble, createBubbleRequest).getBid();
+
+		var setUserBubbleRequest = SetUserBubbleRequest.newBuilder().setUid(uid).setBid(bid).build();
+		callOne(bubbleService::setUserBubble, setUserBubbleRequest);
+		Assertions.assertEquals(callOne(bubbleService::getUserBubble, GetUserBubbleRequest.newBuilder().setUid(uid).build()).getBid(), bid);
+
+		var resetUserBubbleRequest = ResetUserBubbleRequest.newBuilder().setUid(uid).build();
+		callOne(bubbleService::resetUserBubble, resetUserBubbleRequest);
+		var getUserBubbleRequest = GetUserBubbleRequest.newBuilder().setUid(uid).build();
+		Assertions.assertEquals(callOne(bubbleService::getUserBubble, getUserBubbleRequest).getBid(), -1L);
+	}
+
+	@Test
 	void contextLoads() {
 	}
 

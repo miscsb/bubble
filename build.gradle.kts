@@ -7,6 +7,7 @@ plugins {
 	id("org.graalvm.buildtools.native")       version "0.9.28"
 	id("com.adarshr.test-logger")             version "4.0.0"
 	id("com.google.protobuf")                 version "0.9.4"
+	id("jacoco")
 }
 
 	group 					= "com.miscsb"
@@ -85,4 +86,14 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 	jvmArgs("-XX:+EnableDynamicAgentLoading")
 	testLogging.showStandardStreams = true
+	finalizedBy(tasks.withType<JacocoReport>())
+}
+
+tasks.withType<JacocoReport> {
+	dependsOn(tasks.withType<Test>())
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.map {
+			fileTree(it) { exclude("**/com/miscsb/bubble/api/proto/**") }
+		}))
+	}
 }
