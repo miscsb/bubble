@@ -1,0 +1,12 @@
+syntax = "proto3";
+package com.miscsb.bubble;
+
+option java_package = "com.miscsb.bubble.api.proto";
+option java_multiple_files = true;
+
+message GetCandidatesRequest   { int64 uid = 1; }
+message GetCandidatesResponse  { int64 uid = 1; }
+
+service MatchingService {
+  rpc getCandidates (GetCandidatesRequest) returns (stream GetCandidatesResponse);
+}

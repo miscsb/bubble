@@ -68,7 +68,4 @@ public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase
         responseObserver.onCompleted();
     }
 
-    public void markAsSeen(Object request, StreamObserver<Object> responseObserver) {
-        // TODO
-    }
 }

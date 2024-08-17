@@ -2,41 +2,7 @@ syntax = "proto3";
 package com.miscsb.bubble;
  
 option java_package = "com.miscsb.bubble.api.proto";
-option java_outer_classname = "BubbleProto";
 option java_multiple_files = true;
-
-// PROFILES
-
-message ProfileDto {
-    string          firstName         = 1;
-    string          lastName          = 2;
-    string          pronouns          = 3;
-    string          gender            = 4;
-    repeated string preferredGenders  = 5;
-    int32           birthYear         = 6;
-    string          description       = 7;
-}
-
-message CreateProfileRequest    { ProfileDto data = 1; }
-message CreateProfileResponse   { int64 uid = 1; }
-
-message UpdateProfileRequest    { int64 uid = 1; ProfileDto data = 2; }
-message UpdateProfileResponse   { reserved 1, 2; }
-
-message DeleteProfileRequest    { int64 uid = 1; }
-message DeleteProfileResponse   { reserved 1, 2; }
-
-message GetProfileRequest       { int64 uid = 1; }
-message GetProfileResponse      { ProfileDto data = 1; }
-
-service ProfileService {
-    rpc createUser (CreateProfileRequest) returns (CreateProfileResponse);
-    rpc    getUser    (GetProfileRequest) returns    (GetProfileResponse);
-    rpc updateUser (UpdateProfileRequest) returns (UpdateProfileResponse);
-    rpc deleteUser (DeleteProfileRequest) returns (DeleteProfileResponse);
-}
-
-// BUBBLES
 
 message BubbleDto {
     string name = 1;
@@ -74,13 +40,4 @@ service BubbleService {
     rpc resetUserBubble (ResetUserBubbleRequest) returns (ResetUserBubbleResponse);
     rpc   setUserBubble   (SetUserBubbleRequest) returns   (SetUserBubbleResponse);
     rpc   getUserBubble   (GetUserBubbleRequest) returns   (GetUserBubbleResponse);
-}
-
-// MATCHING
-
-message GetCandidatesRequest   { int64 uid = 1; }
-message GetCandidatesResponse  { int64 uid = 1; }
-
-service MatchingService {
-    rpc getCandidates (GetCandidatesRequest) returns (stream GetCandidatesResponse);
 }

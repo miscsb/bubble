@@ -2,8 +2,6 @@ package com.miscsb.redis;
 
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnection;
-import org.springframework.data.redis.core.*;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.util.Assert;
 
 public class RedisCuckooFilter {
@@ -14,14 +12,6 @@ public class RedisCuckooFilter {
     public RedisCuckooFilter(String key, RedisConnectionFactory connectionFactory) {
         Assert.hasText(key, "key must not be empty");
         Assert.notNull(connectionFactory, "connectionFactory must not be null");
-
-        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setKeySerializer(RedisSerializer.string());
-        redisTemplate.setValueSerializer(RedisSerializer.string());
-        redisTemplate.setExposeConnection(true);
-        redisTemplate.setConnectionFactory(connectionFactory);
-        redisTemplate.afterPropertiesSet();
-
         this.key = key;
         this.commands = RedisProbabilisticCommands.fromLettuceConnection((LettuceConnection) connectionFactory.getConnection());
     }

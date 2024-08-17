@@ -1,6 +1,5 @@
 package com.miscsb.bubble.service;
 
-import com.miscsb.bubble.model.Bubble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;

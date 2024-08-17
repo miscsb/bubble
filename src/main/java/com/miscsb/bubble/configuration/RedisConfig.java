@@ -3,7 +3,6 @@ package com.miscsb.bubble.configuration;
 import com.miscsb.bubble.model.TwoProfileMatch;
 import com.miscsb.bubble.model.TwoProfileMatchRedisSerializer;
 import com.miscsb.redis.RedisCuckooFilter;
-import com.miscsb.redis.RedisProbabilisticCommands;
 import io.lettuce.core.ClientOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +13,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
@@ -117,11 +115,6 @@ public class RedisConfig {
     @Bean
     Function<String, RedisCuckooFilter> cuckooFilter(RedisConnectionFactory connectionFactory) {
         return key -> new RedisCuckooFilter(key, connectionFactory);
-    }
-
-    @Bean
-    public RedisProbabilisticCommands commands(RedisConnectionFactory connectionFactory) {
-        return RedisProbabilisticCommands.fromLettuceConnection((LettuceConnection) connectionFactory.getConnection().commands());
     }
 
 }
