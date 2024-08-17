@@ -10,59 +10,22 @@ import com.miscsb.bubble.service.BubbleService;
 import com.miscsb.bubble.service.MatchingService;
 import com.miscsb.bubble.service.ProfileService;
 import com.miscsb.bubble.service.adapter.ProtoAdapter;
-import com.redis.testcontainers.RedisContainer;
 import io.grpc.StatusException;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.StatefulRedisConnection;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import com.miscsb.bubble.model.Bubble;
 import com.miscsb.bubble.model.Profile;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.context.annotation.Import;
 
 @SpringBootTest(classes = { BubbleApplication.class, RedisConfig.class })
-@Testcontainers
+@Import(TestConfig.class)
 public class GrpcServerServiceTests {
-
-	@Container
-	private static RedisContainer container;
-	static {
-		container = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag(RedisContainer.DEFAULT_TAG));
-	}
 
 	@Autowired private BubbleService bubbleService;
 	@Autowired private ProfileService profileService;
 	@Autowired private MatchingService matchingService;
-
-	@BeforeAll
-	static void beforeAll() {
-		container.start();
-		System.setProperty("spring.data.redis.host", container.getRedisHost());
-		System.setProperty("spring.data.redis.port", container.getRedisPort() + "");
-	}
-
-	@AfterAll
-	static void afterAll() {
-		try (RedisClient client = RedisClient.create(container.getRedisURI())) {
-			try (StatefulRedisConnection<String, String> connection = client.connect()) {
-				connection.sync().shutdown(false);
-			}
-			client.shutdown();
-		}
-		container.stop();
-	}
-
-	@BeforeEach
-	void beforeEach() {
-		try (RedisClient client = RedisClient.create(container.getRedisURI())) {
-			try (StatefulRedisConnection<String, String> connection = client.connect()) {
-				connection.sync().flushall();
-			}
-		}
-	}
 
 	@Test
 	public void testMatchingSynchronous() throws StatusException {

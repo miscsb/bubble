@@ -3,8 +3,11 @@ package com.miscsb.bubble.service;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.miscsb.bubble.model.TwoProfileMatch;
+import com.miscsb.bubble.model.TwoProfileMatchRedisSerializer;
+import com.miscsb.redis.RedisCuckooFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -18,6 +21,7 @@ import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
 @GrpcService
 public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase {
@@ -25,12 +29,13 @@ public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase
 
     private final StringRedisTemplate template;
     private final RedisTemplate<String, Profile> profileTemplate;
-    private final RedisTemplate<String, TwoProfileMatch> twoProfileMatchTemplate;
+    private final RedisCuckooFilter cuckooFilter;
+    private final RedisSerializer<TwoProfileMatch> serializer = TwoProfileMatchRedisSerializer.instance();
 
-    public MatchingService(StringRedisTemplate template, RedisTemplate<String, Profile> profileTemplate, RedisTemplate<String, TwoProfileMatch> twoProfileMatchTemplate) {
+    public MatchingService(StringRedisTemplate template, RedisTemplate<String, Profile> profileTemplate, Function<String, RedisCuckooFilter> cfProvider) {
         this.template = template;
         this.profileTemplate = profileTemplate;
-        this.twoProfileMatchTemplate = twoProfileMatchTemplate;
+        this.cuckooFilter = cfProvider.apply("match_filter_prev");
     }
 
     @Override
@@ -53,9 +58,17 @@ public class MatchingService extends MatchingServiceGrpc.MatchingServiceImplBase
         List<String> gcKeys = genderChannels.stream().map(gc -> KeyUtils.bid(bid, gc)).toList();
         for (String result : Objects.requireNonNull(template.opsForSet().union(gcKeys))) {
             if (result.equals(String.valueOf(uid))) continue;
+
+            TwoProfileMatch pair = new TwoProfileMatch(String.valueOf(uid), result);
+            if (cuckooFilter.exists(new String(Objects.requireNonNull(serializer.serialize(pair))))) continue;
+
             var response = GetCandidatesResponse.newBuilder().setUid(Long.parseLong(result)).build();
             responseObserver.onNext(response);
         }
         responseObserver.onCompleted();
+    }
+
+    public void markAsSeen(Object request, StreamObserver<Object> responseObserver) {
+        // TODO
     }
 }
